@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { ArrowUpRight } from 'lucide-react';
+import OptionWheel from '@/components/OptionWheel';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { projects, type Project } from '@/lib/portfolio';
@@ -9,16 +9,18 @@ import { ProjectDetailDialog, captureProjectOrigin, type ProjectOrigin } from '@
 
 if (typeof window !== 'undefined') gsap.registerPlugin(useGSAP);
 
+const wheelItems = projects.map((project, index) => `${String(index + 1).padStart(2, '0')}  ${project.title}${project.sample ? ' · 示例' : ''}`);
+
 export function WorksGallery() {
   const root = useRef<HTMLDivElement>(null);
   const origin = useRef<ProjectOrigin | null>(null);
   const [selected, setSelected] = useState<Project | null>(null);
-  const [active, setActive] = useState<number | null>(null);
+  const [active, setActive] = useState<number | null>(0);
 
   useGSAP(() => {
     const media = gsap.matchMedia();
     media.add('(prefers-reduced-motion: no-preference)', () => {
-      gsap.from(root.current!.querySelectorAll('.works-list-row'), {
+      gsap.from(root.current!.querySelectorAll('.works-wheel-stage'), {
         opacity: 0, y: 32, duration: 0.85, stagger: 0.085,
         delay: 0.12, ease: 'power3.out', clearProps: 'all',
       });
@@ -28,27 +30,22 @@ export function WorksGallery() {
 
   function openProject(project: Project, element: HTMLElement) {
     origin.current = captureProjectOrigin(element);
-    setActive(null);
     setSelected(project);
   }
 
   return <>
     <div ref={root} className="works-directory">
       <h1 className="sr-only">我的作品</h1>
-      <ol className="works-list" onMouseLeave={() => setActive(null)}>
-        {projects.map((project, index) => <li className="works-list-row" key={project.slug}>
-          <button type="button" className="works-list-link"
-            onMouseEnter={() => setActive(index)}
-            onFocus={() => setActive(index)} onBlur={() => setActive(null)}
-            onClick={(event) => openProject(project, event.currentTarget)}
-            aria-label={`查看${project.title}详情`}>
-            <span className="works-list-number">{String(index + 1).padStart(2, '0')}</span>
-            <span className="works-list-title">{project.title}</span>
-            {project.sample && <span className="works-list-sample">示例</span>}
-            <ArrowUpRight className="works-list-arrow" aria-hidden="true" />
-          </button>
-        </li>)}
-      </ol>
+      <div className="works-wheel-stage">
+        <OptionWheel items={wheelItems} defaultSelected={0}
+          textColor="#92928e" activeColor="#eeeae1" side="left"
+          fontSize={2.8} spacing={1.8} curve={1} tilt={8}
+          blur={1.2} fade={0.2} minOpacity={0.25} smoothing={180}
+          inset={48} loop={false} draggable
+          onChange={(index: number) => setActive(index)}
+          onActivate={(index: number, element: HTMLElement) => openProject(projects[index], element)}
+        />
+      </div>
       <div className="works-preview" aria-hidden="true" data-visible={active !== null && !selected}>
         {projects.map((project, index) => <div className="works-preview-slide" data-active={active === index} key={project.slug}>
           <img src={project.cover} alt="" />

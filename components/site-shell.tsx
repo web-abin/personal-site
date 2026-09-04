@@ -9,7 +9,7 @@ import { useGSAP } from '@gsap/react';
 if (typeof window !== 'undefined') gsap.registerPlugin(useGSAP);
 // Preserve the pill position across page-level header remounts during navigation.
 let pillPosition: { x: number; width: number } | undefined;
-export function Header() {
+export function Header({ minimal = false }: { minimal?: boolean }) {
   const path = usePathname();
   const router = useRouter();
   const leaving = useRef(false);
@@ -75,10 +75,10 @@ export function Header() {
       <a className="skip" href="#main">
         跳到主要内容
       </a>
-      <header className="header wrap">
-        <Link href="/" className="logo" aria-label="王俊彬 首页">
+      <header className={`header wrap${minimal ? ' header--minimal' : ''}`}>
+        {!minimal && <Link href="/" className="logo" aria-label="王俊彬 首页">
           <img className="brand-signature" src="/images/weioxabin-signature.png" alt="Weioxabin" width={2151} height={731} draggable={false} />
-        </Link>
+        </Link>}
         <nav ref={nav} className="main-nav" aria-label="主导航">
           <span className="nav-active-pill" aria-hidden="true" />
           {[
@@ -101,9 +101,9 @@ export function Header() {
             </Link>
           ))}
         </nav>
-        <Link className="header-contact" href="/about#contact">
+        {!minimal && <Link className="header-contact" href="/about#contact">
           <span>联系我</span><ArrowUpRight size={16} />
-        </Link>
+        </Link>}
       </header>
     </>
   );
