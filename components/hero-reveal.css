@@ -1,0 +1,77 @@
+.hero-reveal {
+  --reveal-background: #202020;
+  --mouse-x: 0px;
+  --mouse-y: 0px;
+  --reveal-radius: 0px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--reveal-background);
+  min-height: 650px;
+}
+.hero-reveal-layer {
+  position: absolute;
+  inset: 0;
+  background: var(--reveal-background);
+  pointer-events: none;
+}
+.hero-reveal-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: var(--reveal-fit, contain);
+  object-position: var(--reveal-position, center);
+  user-select: none;
+  pointer-events: none;
+}
+.hero-reveal-overlay {
+  clip-path: circle(var(--reveal-radius) at var(--mouse-x) var(--mouse-y));
+  will-change: clip-path;
+}
+.hero-reveal-content {
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+.hero-reveal-content a,
+.hero-reveal-content button {
+  pointer-events: auto;
+}
+.custom-cursor-lens {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  pointer-events: none;
+  box-sizing: border-box;
+  border: 1px solid rgba(238, 236, 228, 0.55);
+  border-radius: 50%;
+  background: transparent;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0);
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+@media (hover: hover) and (pointer: fine) {
+  .hero-reveal[data-reveal-active='true'],
+  .hero-reveal[data-reveal-active='true'] * {
+    cursor: none;
+  }
+}
+@media (hover: none), (pointer: coarse) {
+  .custom-cursor-lens {
+    visibility: hidden;
+  }
+  .hero-reveal-overlay {
+    clip-path: circle(0 at 0 0) !important;
+    will-change: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-reveal-overlay,
+  .custom-cursor-lens {
+    will-change: auto;
+  }
+}
