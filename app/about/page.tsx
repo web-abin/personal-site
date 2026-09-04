@@ -40,7 +40,7 @@ export default function About() {
               <span>01</span>
             </div>
             <div className="monogram" aria-hidden="true">
-              王<span>·</span>俊斌
+              王<span>·</span>俊彬
             </div>
             <div className="identity-bottom">
               <div>
@@ -61,13 +61,13 @@ export default function About() {
               我希望这个网站能让你通过具体的作品，了解我做过什么、如何思考，以及我在意什么。
             </p>
             <p>
-              这份个人介绍会随着真实经历逐步完善。工作背景、教育经历与技术方向，暂时留待补充。
+              目前在北京，专注于 Agent 应用开发与 AI 全栈开发。2016 年至 2020 年就读于河北工程大学，完成本科学业。
             </p>
             <div className="facts">
               {[
-                [MapPin, '所在城市', '待补充'],
-                [Code2, '职业方向', '待补充'],
-                [GraduationCap, '教育背景', '待补充'],
+                [MapPin, '所在城市', '北京'],
+                [Code2, '职业方向', 'Agent 应用开发 · AI 全栈'],
+                [GraduationCap, '教育背景', '河北工程大学 · 本科（2016—2020）'],
               ].map(([Icon, label, value]) => {
                 const I = Icon as typeof MapPin;
                 return (
@@ -105,9 +105,9 @@ export default function About() {
             </div>
             <div>
               <span className="journey-dot hollow" />
-              <span className="mono">时间待补充</span>
-              <h3>教育与学习经历</h3>
-              <p>待补充院校、专业与在校经历。</p>
+              <span className="mono">2016 — 2020</span>
+              <h3>河北工程大学 · 本科</h3>
+              <p>2016 年入学，2020 年毕业。</p>
             </div>
           </div>
         </section>
@@ -168,7 +168,7 @@ export default function About() {
           </div>
         </section>
       </main>
-      <Footer />
+      <Footer hideCallout />
     </>
   );
 }

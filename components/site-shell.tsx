@@ -110,10 +110,10 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
     </>
   );
 }
-export function Footer({ compact = false }: { compact?: boolean }) {
+export function Footer({ compact = false, hideCallout = false }: { compact?: boolean; hideCallout?: boolean }) {
   return (
     <footer className="wrap footer">
-      {!compact && <Link className="footer-title" href="/about#contact">
+      {!compact && !hideCallout && <Link className="footer-title" href="/about#contact">
         好的连接，从一句你好开始。
         <ArrowUpRight />
       </Link>}
