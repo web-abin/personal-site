@@ -1,58 +1,59 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import OptionWheel from '@/components/OptionWheel';
+import Link from 'next/link';
+import { ArrowUpRight } from 'lucide-react';
+import InfiniteMenu from '@/components/InfiniteMenu';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { projects, type Project } from '@/lib/portfolio';
-import { ProjectDetailDialog, captureProjectOrigin, type ProjectOrigin } from '@/components/project-detail-dialog';
+import { projects } from '@/lib/portfolio';
 
 if (typeof window !== 'undefined') gsap.registerPlugin(useGSAP);
-
-const wheelItems = projects.map((project, index) => `${String(index + 1).padStart(2, '0')}  ${project.title}${project.sample ? ' · 示例' : ''}`);
+const menuItems = projects.map(project => ({ image: project.cover, title: project.title, description: project.description, link: `/works/${project.slug}` }));
 
 export function WorksGallery() {
   const root = useRef<HTMLDivElement>(null);
-  const origin = useRef<ProjectOrigin | null>(null);
-  const [selected, setSelected] = useState<Project | null>(null);
-  const [active, setActive] = useState<number | null>(0);
-
+  const [active, setActive] = useState(0);
+  const previous = useRef(0);
+  const [direction, setDirection] = useState(1);
+  const project = projects[active];
   useGSAP(() => {
     const media = gsap.matchMedia();
     media.add('(prefers-reduced-motion: no-preference)', () => {
-      gsap.from(root.current!.querySelectorAll('.works-wheel-stage'), {
-        opacity: 0, y: 32, duration: 0.85, stagger: 0.085,
-        delay: 0.12, ease: 'power3.out', clearProps: 'all',
+      gsap.from(root.current!.querySelector('.works-orbit-stage'), {
+        opacity: 0, scale: 0.72, rotation: -8, duration: 1.15, delay: 0.05, ease: 'power3.out', clearProps: 'all',
       });
+      gsap.from(root.current!.querySelector('.works-inspector'), { opacity:0, x:24, delay:0.35, duration:0.7, ease:'power3.out', clearProps:'all' });
     });
     return () => media.revert();
   }, { scope: root });
 
-  function openProject(project: Project, element: HTMLElement) {
-    origin.current = captureProjectOrigin(element);
-    setSelected(project);
-  }
-
-  return <>
-    <div ref={root} className="works-directory">
-      <h1 className="sr-only">我的作品</h1>
-      <div className="works-wheel-stage">
-        <OptionWheel items={wheelItems} defaultSelected={0}
-          textColor="#92928e" activeColor="#eeeae1" side="left"
-          fontSize={2.8} spacing={1.8} curve={1} tilt={8}
-          blur={1.2} fade={0.2} minOpacity={0.25} smoothing={180}
-          inset={48} loop={false} draggable
-          onChange={(index: number) => setActive(index)}
-          onActivate={(index: number, element: HTMLElement) => openProject(projects[index], element)}
-        />
-      </div>
-      <div className="works-preview" aria-hidden="true" data-visible={active !== null && !selected}>
-        {projects.map((project, index) => <div className="works-preview-slide" data-active={active === index} key={project.slug}>
-          <img src={project.cover} alt="" />
-          <div className="works-preview-caption"><span>{project.category}</span><span>{String(index + 1).padStart(2, '0')} / {String(projects.length).padStart(2, '0')}</span></div>
-        </div>)}
-      </div>
+  return <div ref={root} className="works-directory">
+    <h1 className="sr-only">我的作品</h1>
+    <div className="works-orbit-stage">
+      <InfiniteMenu items={menuItems} scale={1.15}
+        onChange={(index: number) => {
+          setDirection(index >= previous.current ? 1 : -1);
+          previous.current = index;
+          setActive(index);
+        }}
+      />
     </div>
-    <ProjectDetailDialog origin={origin.current} project={selected} onClose={() => setSelected(null)} />
-  </>;
+    <section className="works-inspector" aria-label="当前作品简介">
+      <div className="works-inspector-top"><span>作品预览</span><span>{String(active + 1).padStart(2, '0')} / {String(projects.length).padStart(2, '0')}</span></div>
+      <div className="works-image-stage" data-direction={direction}>
+        {projects.map((item, index) => <img key={item.slug} src={item.cover}
+          alt={active === index ? `${item.title}完整封面` : ''}
+          aria-hidden={active !== index} data-active={active === index} />)}
+      </div>
+      <div className="works-inspector-copy" key={project.slug} data-direction={direction}>
+        <p className="works-inspector-category">{project.category}{project.sample ? ' · 示例作品' : ''}</p>
+        <h2>{project.title}</h2>
+        <p className="works-inspector-description">{project.description}</p>
+      </div>
+      <Link className="works-detail-link" href={`/works/${project.slug}`} aria-label={`查看${project.title}详情`}>
+        查看详情 <ArrowUpRight size={20} aria-hidden="true" />
+      </Link>
+    </section>
+  </div>;
 }

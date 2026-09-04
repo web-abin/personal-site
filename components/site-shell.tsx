@@ -31,8 +31,10 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
     const gallery = main.querySelector<HTMLElement>('.home-gallery');
     // Animate the gallery wrapper, leaving the spatial controller's tile transforms alone.
     const exit = gsap.timeline({ defaults: { ease: 'power3.inOut' } });
-    if (gallery) exit.to(gallery, { scale: 0.76, y: 24, opacity: 0, duration: 0.6 }, 0);
-    exit.to(main, { opacity: 0, duration: 0.35 }, 0.22);
+    if (gallery) exit.to(gallery, { scale: 0.58, rotation: 8, y: 0, opacity: 0, duration: 0.7 }, 0);
+    exit.to(main, { opacity: 0, duration: 0.3 }, 0.4);
+    const branding = home?.querySelectorAll<HTMLElement>('.logo, .header-contact');
+    if (branding?.length) exit.to(branding, { opacity: 0, duration: 0.25 }, 0);
     const footer = home?.querySelector<HTMLElement>('footer');
     if (footer) exit.to(footer, { opacity: 0, duration: 0.25 }, 0.22);
     exit.call(() => router.push('/works'));

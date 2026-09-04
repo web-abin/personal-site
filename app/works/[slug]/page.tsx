@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { projects } from '@/lib/portfolio';
 import { Header, Footer, Label } from '@/components/site-shell';
-import { ProjectVisual } from '@/components/project-visual';
+import './detail.css';
 type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -28,7 +28,7 @@ export default async function ProjectPage({ params }: Props) {
   const next = projects[(projects.indexOf(p) + 1) % projects.length];
   return (
     <>
-      <Header />
+      <Header minimal />
       <main id="main" className="wrap detail-page">
         <Link className="text-link back-link" href="/works">
           <ArrowLeft size={16} /> 返回作品集
@@ -49,7 +49,7 @@ export default async function ProjectPage({ params }: Props) {
             <span>{p.status}</span>
           </div>
         </div>
-        <ProjectVisual project={p} />
+        <div className="detail-full-cover"><img src={p.cover} alt={`${p.title}完整封面`} /></div>
         {p.sample && (
           <p className="sample-notice">
             此项目为布局示例，尚未替换为你的真实作品；以下内容不代表个人经历。
@@ -63,7 +63,12 @@ export default async function ProjectPage({ params }: Props) {
             </div>
           ))}
         </div>
-        <section className="case-body">
+        {p.sections?.map((section, index) => <section className="detail-content-section" key={index}>
+          {section.title && <h2>{section.title}</h2>}
+          {section.text && <p>{section.text}</p>}
+          {section.image && <img src={section.image} alt={section.alt || section.title || ''} />}
+        </section>)}
+        {(p.challenge || p.approach || p.result) && <section className="case-body">
           <aside>
             <Label>作品背后的故事</Label>
             <h2>
@@ -95,7 +100,7 @@ export default async function ProjectPage({ params }: Props) {
               <p>相关链接待补充</p>
             </div>
           </div>
-        </section>
+        </section>}
         <Link className="next-project" href={`/works/${next.slug}`}>
           <div>
             <Label>下一个作品</Label>

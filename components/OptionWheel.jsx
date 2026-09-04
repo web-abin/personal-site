@@ -23,7 +23,6 @@ const OptionWheel = ({
   items = DEFAULT_ITEMS,
   defaultSelected = 3,
   onChange = (index, item) => {},
-  onActivate = (index, element) => {},
   textColor = '#a6a6a6',
   activeColor = '#ffffff',
   side = 'left',
@@ -69,7 +68,7 @@ const OptionWheel = ({
     count: items.length,
     items,
     spacing,
-    rowH: Math.max(fontSize * spacing * remPx, 1),
+    rowH: cfgRef.current.rowH || Math.max(fontSize * spacing * remPx, 1),
     curve,
     tilt,
     blur,
@@ -92,8 +91,7 @@ const OptionWheel = ({
     const cfg = cfgRef.current;
     const tau = Math.max(cfg.smoothing, 1) / 1000;
     const k = reducedRef.current ? 1 : 1 - Math.exp(-dt / tau);
-    const first = itemRefs.current[0];
-    if (first) cfg.rowH = Math.max(parseFloat(getComputedStyle(first).fontSize) * cfg.spacing, 1);
+
 
     const target = targetRef.current;
     const cur = posRef.current;
@@ -101,6 +99,12 @@ const OptionWheel = ({
     const settled = Math.abs(target - next) < 0.001;
     if (settled) next = target;
     posRef.current = next;
+    const idx = ((Math.round(next) % cfg.count) + cfg.count) % cfg.count;
+    if (cfg.count && idx !== selectedRef.current) {
+      selectedRef.current = idx;
+      setSelectedIndex(idx);
+      onChangeRef.current?.(idx, cfg.items[idx]);
+    }
 
     const els = itemRefs.current;
     const n = cfg.count;
@@ -138,7 +142,7 @@ const OptionWheel = ({
 
   const startLoop = useCallback(() => {
     if (rafRef.current != null) {
-      cancelAnimationFrame(rafRef.current);
+      return;
     }
     lastRef.current = performance.now();
     rafRef.current = requestAnimationFrame(runFrame);
@@ -171,13 +175,6 @@ const OptionWheel = ({
       if (!cfg.loop) v = Math.min(Math.max(v, 0), Math.max(cfg.count - 1, 0));
       if (snap) v = Math.round(v);
       targetRef.current = v;
-      const idx = ((Math.round(v) % cfg.count) + cfg.count) % cfg.count;
-      if (idx !== selectedRef.current) {
-        selectedRef.current = idx;
-        setSelectedIndex(idx);
-        onChangeRef.current?.(idx, cfg.items[idx]);
-        playTick();
-      }
       startLoop();
     },
     [startLoop, playTick]
@@ -242,6 +239,7 @@ const OptionWheel = ({
   const handleItemClick = useCallback(
     index => {
       if (dragMovedRef.current) { dragMovedRef.current = false; return; }
+      clearTimeout(wheelTimerRef.current);
       const cfg = cfgRef.current;
       const cur = targetRef.current;
       let d = index - (((cur % cfg.count) + cfg.count) % cfg.count);
@@ -250,16 +248,15 @@ const OptionWheel = ({
         else if (d < -cfg.count / 2) d += cfg.count;
       }
       applyTarget(cur + d, true);
-      onActivate(index, itemRefs.current[index]);
     },
-    [applyTarget, onActivate]
+    [applyTarget]
   );
 
   const handleKeyDown = useCallback(
     e => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        if (items.length) onActivate(selectedRef.current, itemRefs.current[selectedRef.current]);
+        applyTarget(Math.round(targetRef.current), true);
         return;
       }
       if (e.key === 'Home' || e.key === 'End') {
@@ -274,12 +271,17 @@ const OptionWheel = ({
       e.preventDefault();
       applyTarget(Math.round(targetRef.current) + delta, true);
     },
-    [applyTarget, items, onActivate]
+    [applyTarget, items]
   );
 
   useEffect(() => {
     const media = matchMedia('(prefers-reduced-motion: reduce)');
-    const refresh = () => { reducedRef.current = media.matches; startLoop(); };
+    const refresh = () => {
+      reducedRef.current = media.matches;
+      const first = itemRefs.current[0];
+      if (first) cfgRef.current.rowH = Math.max(parseFloat(getComputedStyle(first).fontSize) * cfgRef.current.spacing, 1);
+      startLoop();
+    };
     refresh();
     media.addEventListener('change', refresh);
     const observer = new ResizeObserver(refresh);
@@ -305,7 +307,7 @@ const OptionWheel = ({
       ref={rootRef}
       role="listbox"
       tabIndex={0}
-      aria-label="我的作品，使用方向键选择，回车查看详情"
+      aria-label="我的作品，滚动、拖拽或使用方向键选择；按 Tab 前往查看详情"
       aria-activedescendant={`${optionId}-${selectedIndex}`}
       className={`option-wheel${side === 'right' ? ' option-wheel--right' : ''}${isDragging ? ' option-wheel--dragging' : ''}${className ? ` ${className}` : ''}`}
       style={{
