@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ArrowUpRight } from 'lucide-react';
-import { useRef, type MouseEvent } from 'react';
+import { useEffect, useRef, type MouseEvent } from 'react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 
@@ -13,7 +13,56 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
   const path = usePathname();
   const router = useRouter();
   const leaving = useRef(false);
+  const header = useRef<HTMLElement>(null);
   const nav = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const element = header.current;
+    if (!element) return;
+    const scrollPosition = () => Math.max(0, Math.min(window.scrollY,
+      Math.max(0, document.documentElement.scrollHeight - window.innerHeight)));
+    let lastY = scrollPosition();
+    let accumulated = 0;
+    let direction = 0;
+    let frame = 0;
+    element.dataset.hidden = 'false';
+    element.dataset.floating = String(lastY > 32);
+    const update = () => {
+      frame = 0;
+      const y = scrollPosition();
+      const delta = y - lastY;
+      lastY = y;
+      element.dataset.floating = String(y > 32);
+      if (y <= element.offsetHeight + 24 || element.querySelector(':focus-visible') || leaving.current) {
+        element.dataset.hidden = 'false';
+        accumulated = 0;
+        direction = 0;
+        return;
+      }
+      if (Math.abs(delta) < 0.5) return;
+      const nextDirection = Math.sign(delta);
+      if (direction !== nextDirection) accumulated = 0;
+      direction = nextDirection;
+      accumulated += Math.abs(delta);
+      // Small touchpad movements should not make the navigation flicker.
+      if (accumulated >= (direction > 0 ? 22 : 10)) {
+        element.dataset.hidden = String(direction > 0);
+        accumulated = 0;
+      }
+    };
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
+    const onFocus = () => { element.dataset.hidden = 'false'; accumulated = 0; };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    element.addEventListener('focusin', onFocus);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      element.removeEventListener('focusin', onFocus);
+      delete element.dataset.hidden;
+      delete element.dataset.floating;
+    };
+  }, [path]);
   const { contextSafe } = useGSAP(() => {
     leaving.current = false;
     return () => { leaving.current = false; };
@@ -29,10 +78,15 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
     if (leaving.current) return;
     leaving.current = true;
     const gallery = main.querySelector<HTMLElement>('.home-gallery');
-    // Animate the gallery wrapper, leaving the spatial controller's tile transforms alone.
+    // Reverse the wall's actual entrance positions, rather than shrinking the wrapper.
     const exit = gsap.timeline({ defaults: { ease: 'power3.inOut' } });
-    if (gallery) exit.to(gallery, { scale: 0.58, rotation: 8, y: 0, opacity: 0, duration: 0.7 }, 0);
-    exit.to(main, { opacity: 0, duration: 0.3 }, 0.4);
+    const viewport = gallery?.querySelector<HTMLElement>('.spatial-viewport');
+    const collapse = new Event('gallery-collapse', { cancelable: true });
+    viewport?.dispatchEvent(collapse);
+    if (!collapse.defaultPrevented && gallery) exit.to(gallery, { scale: 0, opacity: 0, duration: 0.8 }, 0);
+    const title = main.querySelector<HTMLElement>('.new-hero-title');
+    if (title) exit.to(title, { opacity:0, duration:0.25 }, 0);
+    exit.to(main, { opacity: 0, duration: 0.16 }, 0.86);
     const branding = home?.querySelectorAll<HTMLElement>('.logo, .header-contact');
     if (branding?.length) exit.to(branding, { opacity: 0, duration: 0.25 }, 0);
     const footer = home?.querySelector<HTMLElement>('footer');
@@ -41,6 +95,7 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
     // Restore the current page if navigation fails or stalls; unmount reverts the context.
     gsap.delayedCall(4, () => {
       exit.revert();
+      viewport?.dispatchEvent(new Event('gallery-restore'));
       leaving.current = false;
     });
   });
@@ -59,7 +114,7 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
       });
       element.dataset.indicatorReady = 'true';
       gsap.to(pill, {
-        ...target, duration: reduced.matches ? 0 : 0.65, ease: 'elastic.out(1, 0.65)',
+        ...target, duration: reduced.matches ? 0 : 0.42, ease: 'power3.out',
         onUpdate: () => {
           pillPosition = { x: Number(gsap.getProperty(pill, 'x')), width: Number(gsap.getProperty(pill, 'width')) };
         },
@@ -77,7 +132,7 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
       <a className="skip" href="#main">
         跳到主要内容
       </a>
-      <header className={`header wrap${minimal ? ' header--minimal' : ''}`}>
+      <header ref={header} className={`header wrap${minimal ? ' header--minimal' : ''}`}>
         {!minimal && <Link href="/" className="logo" aria-label="王俊彬 首页">
           <img className="brand-signature" src="/images/weioxabin-signature.png" alt="Weioxabin" width={2151} height={731} draggable={false} />
         </Link>}
@@ -112,7 +167,7 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
 }
 export function Footer({ compact = false, hideCallout = false }: { compact?: boolean; hideCallout?: boolean }) {
   return (
-    <footer className="wrap footer">
+    <footer className={`wrap footer${hideCallout ? ' footer--quiet' : ''}`}>
       {!compact && !hideCallout && <Link className="footer-title" href="/about#contact">
         好的连接，从一句你好开始。
         <ArrowUpRight />

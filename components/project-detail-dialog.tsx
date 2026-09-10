@@ -4,6 +4,7 @@ import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ArrowUpRight, X } from 'lucide-react';
 import type { Project } from '@/lib/portfolio';
+import { ProjectMediaCarousel } from '@/components/project-media-carousel';
 
 if (typeof window !== 'undefined') gsap.registerPlugin(useGSAP);
 export type ProjectOrigin = { x: number; y: number; width: number; height: number };
@@ -67,7 +68,7 @@ export function ProjectDetailDialog({ project, origin, onClose }: {
           <span>{project.category}{project.sample ? ' · 示例项目' : ''}</span>
           <button type="button" className="project-dialog-close" onClick={close} aria-label="关闭作品详情" autoFocus><X size={20} /></button>
         </div>
-        {project.cover && <div className="project-dialog-media"><img className="project-dialog-cover" src={project.cover} alt={`${project.title}封面`} /></div>}
+        <ProjectMediaCarousel title={project.title} cover={project.cover} gallery={project.gallery} compact />
         <div className="project-dialog-content">
           <h2 id={titleId}>{project.title}</h2>
           <p className="project-dialog-intro" id={descriptionId}>{project.description}</p>
@@ -80,11 +81,15 @@ export function ProjectDetailDialog({ project, origin, onClose }: {
               {(project.sections ?? [{ title: '作品介绍', text: project.approach }]).map((section, index) => <section key={index}>
                 {section.title && <h3>{section.title}</h3>}
                 {section.text && <p>{section.text}</p>}
+                {section.items?.length && <ul>{section.items.map(item => <li key={item}>{item}</li>)}</ul>}
                 {section.image && <img src={section.image} alt={section.alt ?? section.title ?? '作品介绍图片'} loading="lazy" />}
               </section>)}
             </div>
           </div>
-          {experienceUrl && <footer className="project-dialog-action"><a href={experienceUrl} target="_blank" rel="noopener noreferrer">体验作品 <ArrowUpRight size={20} /></a></footer>}
+          {(experienceUrl || project.articleUrl) && <footer className="project-dialog-action">
+            {project.articleUrl && <a className="project-dialog-article" href={project.articleUrl} target="_blank" rel="noopener noreferrer">介绍文章 <ArrowUpRight size={18} /></a>}
+            {experienceUrl && <a href={experienceUrl} target="_blank" rel="noopener noreferrer">体验作品 <ArrowUpRight size={20} /></a>}
+          </footer>}
         </div>
       </article>}
     </dialog>

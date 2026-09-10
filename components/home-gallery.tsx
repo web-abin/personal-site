@@ -16,7 +16,7 @@ export function HomeGallery() {
   };
   const [selected, setSelected] = useState<Project | null>(null);
   const root = useRef<HTMLDivElement>(null);
-  useGSAP(() => {
+  useGSAP((context, contextSafe) => {
     const viewport = root.current;
     if (!viewport) return;
     const tiles = [...viewport.querySelectorAll<HTMLElement>('.spatial-tile')];
@@ -24,6 +24,8 @@ export function HomeGallery() {
     const entrance = tiles.map(() => ({ progress: reduced.matches ? 1 : 0 }));
     const controller = mountSpatialGallery(viewport, entrance);
     let disposed = false;
+    let departing = false;
+    let departure: gsap.core.Tween | undefined;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let stopWaiting: (() => void) | undefined;
     const finish = () => {
@@ -51,9 +53,33 @@ export function HomeGallery() {
       Promise.race([Promise.allSettled(images.map((image) => image.decode())), deadline])
         .then(() => {
           clearTimeout(timer);
-          if (!disposed && !reduced.matches) timeline.play(0);
+          if (!disposed && !departing && !reduced.matches) timeline.play(0);
         });
     }
+    const collapse = contextSafe!((event: Event) => {
+      event.preventDefault();
+      departing = true;
+      clearTimeout(timer);
+      stopWaiting?.();
+      timeline.pause();
+      departure?.kill();
+      controller.beginDeparture();
+      viewport.dataset.departing = 'true';
+      departure = gsap.to(entrance, {
+        progress: 0, duration: 0.68, ease: 'power3.inOut',
+        stagger: { amount: 0.18, from: 'edges' },
+        onUpdate: controller.renderEntrance,
+      });
+    });
+    const restore = contextSafe!(() => {
+      departure?.kill();
+      departing = false;
+      delete viewport.dataset.departing;
+      controller.cancelDeparture();
+      finish();
+    });
+    viewport.addEventListener('gallery-collapse', collapse);
+    viewport.addEventListener('gallery-restore', restore);
     const preferences = () => {
       if (reduced.matches) { timeline.kill(); finish(); }
     };
@@ -63,6 +89,10 @@ export function HomeGallery() {
       clearTimeout(timer);
       stopWaiting?.();
       timeline.kill();
+      departure?.kill();
+      viewport.removeEventListener('gallery-collapse', collapse);
+      viewport.removeEventListener('gallery-restore', restore);
+      delete viewport.dataset.departing;
       reduced.removeEventListener('change', preferences);
       delete viewport.dataset.entering;
       controller.dispose();

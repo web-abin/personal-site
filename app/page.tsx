@@ -4,14 +4,13 @@ import { HomeScrollScenes } from '@/components/home-scroll-scenes';
 import { Header, Footer } from '@/components/site-shell';
 import { HeroScrollTitle } from '@/components/hero-scroll-title';
 import { HomeGallery } from '@/components/home-gallery';
-import SplashCursor from '@/components/splash-cursor';
+import { CapabilityMap } from '@/components/capability-map';
 import './home.css';
 
 export default function Home() {
   return (
     <div className="home-redesign">
       <Header />
-      <SplashCursor />
       <HomeScrollScenes>
         <section className="new-hero wrap" aria-labelledby="home-title">
           <div className="home-hero-meta">
@@ -20,17 +19,52 @@ export default function Home() {
           </div>
           <HomeGallery />
           <HeroScrollTitle>
-            {/* <h1 id="home-title">
-              学如逆水行舟<span></span>不进则退<span>。</span>
-            </h1> */}
-            <div className="hero-signature greeting-artwork">
-              <img src="/images/hello-wang-junbin.png" alt="你好，我是王俊彬" width={2172} height={724} draggable={false} />
+            <div className="hero-intro">
+              <h1 id="home-title" className="hero-greeting-artwork">
+                <img src="/images/hello-wang-junbin.png" alt="你好，我是王俊彬" width={2172} height={724} draggable={false} />
+              </h1>
+              <div className="hero-intro-foot">
+                <p>在代码、产品与好奇心之间，持续做点有意思的东西。</p>
+                <span aria-hidden="true">下滑浏览&nbsp; ↓
+                </span>
+              </div>
             </div>
           </HeroScrollTitle>
         </section>
+        <section className="home-capabilities wrap" id="能力图谱" data-home-reveal data-home-timeline>
+          <div className="home-section-meta">
+            <span>01 / 能力图谱</span>
+            <span>FULL-STACK × AI</span>
+          </div>
+          <div className="capability-heading" data-home-reveal-item>
+            <h2>我的技术栈<span>。</span></h2>
+            <p>FRONTEND / BACKEND / AGENT / DATA / DELIVERY</p>
+          </div>
+          <CapabilityMap />
+        </section>
+        <section className="home-strengths wrap" id="我的优势" data-home-reveal data-home-timeline>
+          <div className="home-section-meta">
+            <span>02 / 我的优势</span>
+            <span>用作品和结果说话</span>
+          </div>
+          <div className="strengths-heading" data-home-reveal-item>
+            <h2>我在意的，<br />不只是<span>把代码写完。</span></h2>
+          </div>
+          <div className="strength-grid">
+            {[
+              ['01', '从 0 到 1', 'PRODUCT · ARCHITECTURE · SHIP', '0→1'],
+              ['02', '复杂系统可控', 'TRACE · VALIDATE · FALLBACK', 'CTRL'],
+              ['03', '持续输出', 'OPEN SOURCE · WRITING · SHARE', '150+'],
+            ].map(([number, title, proof, mark]) => (
+              <article key={number} data-home-reveal-item>
+                <span>{number}</span><strong>{mark}</strong><h3>{title}</h3><small>{proof}</small>
+              </article>
+            ))}
+          </div>
+        </section>
         <section id="做事方式" className="home-method wrap">
           <div className="home-section-meta">
-            <span>01 / 做事方式</span>
+            <span>03 / 做事方式</span>
             <span>从想法到实现</span>
           </div>
           <h2>
@@ -46,122 +80,71 @@ export default function Home() {
               [
                 '01',
                 '理解问题',
-                '先问为什么，再想怎么做。',
-                '了解需求、梳理背景，让每一次实现有明确的方向。',
+                'WHY → WHAT',
               ],
               [
                 '02',
                 '动手构建',
-                '让想法，先成为可以使用的东西。',
-                '从一个可运行的版本出发，在实际体验中发现问题。',
+                'MAKE IT WORK',
               ],
               [
                 '03',
                 '持续打磨',
-                '细节里，藏着对体验的在意。',
-                '逐步优化交互、结构与表达，让作品更加清晰、可靠。',
+                'MAKE IT RIGHT',
               ],
               [
                 '04',
                 '回看与成长',
-                '留下过程，也留下新的问题。',
-                '记录选择、验证结果，把每次实践变成下一次的经验。',
+                'LEARN → ITERATE',
               ],
-            ].map(([n, title, sub, description]) => (
+            ].map(([n, title, sub]) => (
               <article className="method-row" key={n}>
                 <span className="method-number">{n}</span>
                 <h3>{title}</h3>
                 <div>
                   <h4>{sub}</h4>
-                  <p>{description}</p>
                 </div>
                 <ArrowUpRight className="method-arrow" size={28} />
               </article>
             ))}
           </div>
         </section>
-        <section className="home-story wrap" id="个人经历">
+        <section className="home-proof wrap" id="实践与写作" data-home-reveal data-home-timeline>
           <div className="home-section-meta">
-            <span>02 / 我的经历</span>
-            <Link href="/about">完整个人介绍 ↗</Link>
+            <span>04 / 实践与写作</span>
+            <span>用时间积累，也用结果校验</span>
           </div>
-          <div className="home-story-grid">
-            <div className="story-heading">
-              <h2>
-                一路走来，
-                <br />
-                一直<span>向前。</span>
-              </h2>
-              <p>
-                经历构成背景，作品留下足迹。
-                <br />
-                这里会逐步补齐我的个人故事。
-              </p>
-            </div>
-            <div className="story-timeline">
-              {[
-                [
-                  '现在',
-                  '搭建自己的个人空间',
-                  '整理经历、收集作品，也让下一次探索有地方安放。',
-                ],
-                [
-                  '待补充',
-                  '工作与项目经历',
-                  '工作时间、岗位职责与个人贡献待补充。',
-                ],
-                [
-                  '待补充',
-                  '教育与学习经历',
-                  '院校、专业、学习方向与相关经历待补充。',
-                ],
-              ].map(([date, title, desc]) => (
-                <article key={title}>
-                  <span>{date}</span>
-                  <h3>{title}</h3>
-                  <p>{desc}</p>
-                </article>
-              ))}
+          <div className="proof-grid">
+            {[
+              ['6', 'YEARS', '软件开发经验'],
+              ['2', 'YEARS', 'AI 应用实践'],
+              ['150+', 'ARTICLES', '技术写作'],
+              ['2万+', 'USERS', '独立小游戏用户'],
+            ].map(([value, unit, label]) => (
+              <div key={label} data-home-reveal-item><strong>{value}</strong><span>{unit}</span><p>{label}</p></div>
+            ))}
+          </div>
+          <div className="proof-note" data-home-reveal-item>
+            <div>
+              <a href="https://juejin.cn/user/994399097982728/posts" target="_blank" rel="noopener noreferrer">阅读我的文章 <ArrowUpRight size={18} /></a>
+              <a href="https://github.com/web-abin" target="_blank" rel="noopener noreferrer">查看开源项目 <ArrowUpRight size={18} /></a>
             </div>
           </div>
         </section>
-        <section className="home-about-panel wrap">
-          <div className="about-placeholder" aria-label="个人照片占位区域">
-            <span>个人影像 / 待补充</span>
-            <strong>
-              我<span>，</span>
-              <br />
-              不止一面<span>。</span>
-            </strong>
-            <div>未来在这里，放一张喜欢的照片。</div>
-          </div>
-          <div className="home-about-text">
-            <span className="home-section-meta">03 / 作品之外</span>
-            <h2>
-              关于我，
-              <br />
-              也关于<span>好奇心。</span>
-            </h2>
-            <p>
-              我希望你通过这里的作品，了解我的思考方式，也看到工作之外的我。
-            </p>
-            <div className="about-info-lines">
-              <div>
-                <span>技术栈</span>
-                <span>语言、框架与工具待补充</span>
-              </div>
-              <div>
-                <span>兴趣爱好</span>
-                <span>喜欢的事物与日常待补充</span>
-              </div>
-              <div>
-                <span>个人优势</span>
-                <span>结合真实项目逐步完善</span>
-              </div>
+        <section className="home-now wrap" id="最近在关注" data-home-reveal data-home-timeline>
+          <div className="home-section-meta"><span>05 / 最近在关注</span><span>NOW / 2026</span></div>
+          <div className="now-layout">
+            <h2 data-home-reveal-item>保持好奇，<br />也保持<span>具体。</span></h2>
+            <div className="now-list">
+              {[
+                ['01', 'Agent 可控执行'],
+                ['02', 'RAG 链路评估'],
+                ['03', 'MCP 与工具协议'],
+                ['04', 'AI Native 研发'],
+              ].map(([number, title]) => (
+                <article key={number} data-home-reveal-item><span>{number}</span><h3>{title}</h3><ArrowUpRight size={20} /></article>
+              ))}
             </div>
-            <Link href="/about" className="home-outline-link">
-              进一步认识我 <ArrowUpRight size={20} />
-            </Link>
           </div>
         </section>
         <section className="home-last-word wrap">

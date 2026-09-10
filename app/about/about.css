@@ -1,0 +1,55 @@
+.footer--quiet .footer-bottom { border-top:0; }
+.footer--quiet { padding-top:0; }
+.about-page .facts>div { display:grid; grid-template-columns:17px 70px minmax(0,1fr); align-items:start; font-size:14px; }
+.about-page .facts strong { text-align:right; color:#b5b6ad; line-height:1.6; overflow-wrap:anywhere; }
+.about-page .about-copy>p,.about-page .journey-list p { font-size:16px; line-height:1.9; }
+.about-skill-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:32px 60px; }
+.about-skill-grid h3,.about-practice h3 { font-size:22px; font-weight:500; margin-bottom:14px; }
+.about-skill-grid p,.about-practice p { font-size:16px; line-height:1.9; color:#a0a993; }
+.about-practice { margin-top:40px; max-width:1000px; }
+.about-contact-link,.about-contact-label { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:26px; padding-top:18px; border-top:1px solid #343d2d; font-size:14px; color:#b5b6ad; overflow-wrap:anywhere; }
+.about-contact-link svg { flex:none; }
+.about-contact-link:hover { color:#eeeae1; }
+@media(max-width:900px) { .about-page .contact-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:700px) { .about-skill-grid { grid-template-columns:1fr; gap:28px; } }
+@media(max-width:420px) { .about-page .contact-grid { grid-template-columns:1fr; } }
+
+/* Keep the supplied portrait's full composition; frame it with the site's dark tones. */
+.about-page .identity-portrait { display:block; align-self:start; width:100%; max-width:440px; min-height:0; margin:0 auto; padding:0; overflow:hidden; background:#171918; border:1px solid #ffffff16; border-radius:12px; }
+.identity-photo { position:relative; isolation:isolate; }
+.identity-photo img { display:block; width:100%; height:auto; aspect-ratio:3/4; object-fit:contain; }
+.identity-photo::after { content:''; position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,#070a0d35 0%,transparent 22%,transparent 82%,#17191899 100%); }
+.identity-portrait .visual-top { position:absolute; inset:24px 24px auto; z-index:1; display:flex; justify-content:space-between; color:#f0f0eb; font-size:12px; letter-spacing:.08em; text-shadow:0 1px 8px #0006; }
+@media(max-width:700px) {
+  .about-page .identity-portrait { max-width:400px; }
+  .identity-portrait .visual-top { inset:20px 20px auto; }
+}
+
+/* Bring the biography into the same neutral editorial system as the portfolio. */
+.about-page { color:#efeee9; }
+.about-page .serif { color:#a7a79f; font-family:"Songti SC","STSong",serif; }
+.about-heading .eyebrow,.about-page .mono { color:#7e7e78; }
+.about-page .heading-row h1 { font-weight:500; letter-spacing:-.065em; line-height:1.08; }
+.about-page .identity-portrait { border-radius:7px; border-color:#ffffff12; background:#151515; }
+.identity-photo::after { background:linear-gradient(180deg,#06090b28 0%,transparent 24%,transparent 78%,#11111180 100%); }
+.about-page .about-copy>p,.about-page .journey-list p,.about-skill-grid p,.about-practice p { color:#969690; }
+.about-page .facts>div { border-color:#2d2d2b; color:#8f8f89; }
+.about-page .facts strong { color:#b8b8b2; }
+.about-journey { border-color:#2b2b2a; }
+.journey-list>div { border-color:#3b3b38; }
+.journey-dot { width:6px; height:6px; left:-3px; background:#d9d9d2; box-shadow:0 0 0 4px #0b0b0b; }
+.about-skill-grid { gap:0 60px; border-top:1px solid #2b2b2a; }
+.about-skill-grid article { padding:30px 0; border-bottom:1px solid #2b2b2a; }
+.about-skill-grid h3,.about-practice h3 { font-weight:480; letter-spacing:-.02em; }
+.contact-grid { gap:14px; }
+.contact-card { border-color:#2e2e2c; border-radius:7px; background:#101010; transition:transform .35s cubic-bezier(.22,1,.36,1),background .35s,border-color .35s; }
+.contact-card-top { color:#aaa9a2; }
+.about-contact-link,.about-contact-label { border-color:#30302e; color:#aaa9a2; }
+@media(hover:hover) {
+  .contact-card:hover { transform:translateY(-4px); background:#141414; border-color:#444440; }
+}
+@media(max-width:700px) {
+  .about-page .heading-row h1 { font-size:clamp(52px,15vw,72px); }
+  .about-skill-grid { border-top:0; }
+}
+@media(prefers-reduced-motion:reduce) { .contact-card { transition:none; } }

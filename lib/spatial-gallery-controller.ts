@@ -21,8 +21,10 @@ export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: nu
   const coverImages = tiles.map(tile => tile.querySelector<HTMLImageElement>('img'));
   const coverUrls = coverImages.map(image => image?.src ?? '');
   let planar = false;
+  let departing = false;
   let scrollProgress = 0, scrollX = 0, scrollY = 0;
   let hovered: HTMLElement | null = null;
+  let pressed: HTMLElement | null = null;
   const hoverAmounts = tiles.map(() => 0);
   const coordinates = tiles.map(tile => ({ column: Number(tile.dataset.column), row: Number(tile.dataset.row) }));
   const written = tiles.map(() => ({ transform: '', opacity: '', visibility: '' }));
@@ -182,13 +184,15 @@ export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: nu
     const growth = motion.matches ? 1 : 1 - Math.pow(0.84, dt / 16.667);
     x += (tx - x) * alpha;
     y += (ty - y) * alpha;
-    const targetHold = pointer !== null && !motion.matches ? 1 : 0;
+    const targetHold = pointer !== null && moved && !motion.matches ? 1 : 0;
     hold += (targetHold - hold) * growth;
     zoom += (tz - zoom) * growth;
     let hovering = false;
     tiles.forEach((tile, index) => {
-      const target = hovered === tile && pointer === null && scrollProgress === 0 && !motion.matches
-        ? 0.045 : 0;
+      const target = scrollProgress === 0 && !motion.matches
+        ? pressed === tile && pointer !== null && !moved ? -0.035
+          : hovered === tile && pointer === null ? 0.045 : 0
+        : 0;
       hoverAmounts[index] += (target - hoverAmounts[index]) * growth;
       if (Math.abs(target - hoverAmounts[index]) < 0.0001) hoverAmounts[index] = target;
       else hovering = true;
@@ -215,6 +219,7 @@ export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: nu
     startY = lastY = e.clientY;
     downTime = moveTime = performance.now();
     moved = false;
+    pressed = (e.target as HTMLElement).closest?.<HTMLElement>('.spatial-tile') ?? null;
     suppressClick = false;
     vx = vy = flingX = flingY = 0;
     // Stop the old fling before beginning a new grab, without snapping to a card.
@@ -251,6 +256,7 @@ export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: nu
     if (pointer === null || (e && e.pointerId !== pointer)) return;
     const id = pointer;
     pointer = null;
+    pressed = null;
     const now = performance.now();
     suppressClick = moved || now - downTime > 280;
     if (
@@ -343,6 +349,7 @@ export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: nu
   }
   function leave() { hovered = null; queue(); }
   function scrollScene(e: Event) {
+    if (departing) return;
     const raw = Math.max(0, Math.min(1, (e as CustomEvent<number>).detail));
     const progress = raw < 0.0001 ? 0 : raw > 0.9999 ? 1 : raw;
     if (progress > 0 && scrollProgress === 0) {
@@ -401,6 +408,17 @@ export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: nu
   queue();
   return {
     reset,
+    beginDeparture() {
+      departing = true;
+      finish();
+      flingX = flingY = 0;
+      hovered = null;
+      hoverAmounts.fill(0);
+      scrollProgress = 0;
+      hold = zoom = tz = 0;
+      queue();
+    },
+    cancelDeparture() { departing = false; queue(); },
     renderEntrance() {
       queue();
     },

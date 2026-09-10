@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { projects } from '@/lib/portfolio';
 import { Header, Footer, Label } from '@/components/site-shell';
+import { ProjectMediaCarousel } from '@/components/project-media-carousel';
 import './detail.css';
 type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -12,12 +13,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: p?.title ?? '作品未找到',
     description: p?.description,
-    openGraph: { title: p?.title, description: p?.description, images: [] },
+    openGraph: { title: p?.title, description: p?.description, images: p?.cover ? [p.cover] : [] },
     twitter: {
       card: 'summary',
       title: p?.title,
       description: p?.description,
-      images: [],
+      images: p?.cover ? [p.cover] : [],
     },
   };
 }
@@ -34,38 +35,41 @@ export default async function ProjectPage({ params }: Props) {
           <ArrowLeft size={16} /> 返回作品集
         </Link>
         <div className="detail-heading">
-          <Label>
-            作品 {p.number} / {p.category} / {p.year}
-          </Label>
+          <Label>{['作品 ' + p.number, p.category, p.year].filter(Boolean).join(' / ')}</Label>
           <h1>
             {p.title}
             <span className="serif">.</span>
           </h1>
           <p>{p.description}</p>
           <div className="tags">
-            {p.tags.map((t) => (
+            {[...new Set([...p.tags, ...p.techStack])].map((t) => (
               <span key={t}>{t}</span>
             ))}
             <span>{p.status}</span>
           </div>
+          {(p.experienceUrl || p.articleUrl) && <div className="detail-actions detail-actions--top">
+            {p.experienceUrl && <a className="detail-experience-link" href={p.experienceUrl} target="_blank" rel="noopener noreferrer">体验作品 <ArrowUpRight size={20} /></a>}
+            {p.articleUrl && <a className="detail-article-link" href={p.articleUrl} target="_blank" rel="noopener noreferrer">阅读介绍文章 <ArrowUpRight size={18} /></a>}
+          </div>}
         </div>
-        <div className="detail-full-cover"><img src={p.cover} alt={`${p.title}完整封面`} /></div>
+        <ProjectMediaCarousel title={p.title} cover={p.cover} gallery={p.gallery} />
         {p.sample && (
           <p className="sample-notice">
             此项目为布局示例，尚未替换为你的真实作品；以下内容不代表个人经历。
           </p>
         )}
-        <div className="detail-metrics">
+        {p.metrics.length > 0 && <div className="detail-metrics">
           {p.metrics.map((m) => (
             <div key={m.label}>
               <strong>{m.value}</strong>
               <span>{m.label}</span>
             </div>
           ))}
-        </div>
+        </div>}
         {p.sections?.map((section, index) => <section className="detail-content-section" key={index}>
           {section.title && <h2>{section.title}</h2>}
           {section.text && <p>{section.text}</p>}
+          {section.items?.length && <ul>{section.items.map((item) => <li key={item}>{item}</li>)}</ul>}
           {section.image && <img src={section.image} alt={section.alt || section.title || ''} />}
         </section>)}
         {(p.challenge || p.approach || p.result) && <section className="case-body">
@@ -95,10 +99,6 @@ export default async function ProjectPage({ params }: Props) {
                 <p>{desc}</p>
               </section>
             ))}
-            <div className="resource-placeholder">
-              <span>项目演示 / 源码 / 数据依据</span>
-              <p>相关链接待补充</p>
-            </div>
           </div>
         </section>}
         <Link className="next-project" href={`/works/${next.slug}`}>
@@ -109,7 +109,7 @@ export default async function ProjectPage({ params }: Props) {
           <ArrowUpRight size={42} />
         </Link>
       </main>
-      <Footer />
+      <Footer hideCallout />
     </>
   );
 }

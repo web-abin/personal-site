@@ -119,10 +119,17 @@ html { scrollbar-gutter:stable; }
 .project-tech { display:flex; flex-wrap:wrap; gap:7px; list-style:none; padding:0; margin:0; }
 .project-tech li { font-size:11px; background:#ffffff06; border:1px solid #ffffff10; padding:5px 9px; border-radius:6px; color:#aaa; }
 .project-story section+section { margin-top:28px; }
+.project-story ul { display:grid; gap:10px; margin:0; padding-left:18px; color:#969696; }
+.project-story li { padding-left:4px; font-size:14px; line-height:1.75; }
 .project-story img { width:100%; height:auto; display:block; border-radius:8px; margin-top:20px; }
-.project-dialog-action { margin-top:36px; display:flex; justify-content:flex-end; border-top:1px solid #ffffff12; padding-top:28px; }
+.project-dialog-carousel { position:relative; }
+.project-dialog-carousel .project-carousel-previous { left:12px!important; }
+.project-dialog-carousel .project-carousel-next { right:12px!important; }
+.project-dialog-action { margin-top:36px; display:flex; justify-content:flex-end; gap:12px; border-top:1px solid #ffffff12; padding-top:28px; }
 .project-dialog-action a { display:inline-flex; align-items:center; gap:36px; padding:14px 22px; border-radius:32px; background:#eee; color:#111; font-size:14px; }
 .project-dialog-action a:hover { background:#fff; }
+.project-dialog-action .project-dialog-article { background:transparent; border:1px solid #ffffff20; color:#ddd; }
+.project-dialog-action .project-dialog-article:hover { background:#ffffff08; }
 .works-index-page { padding-top:152px; padding-bottom:100px; }
 .works-editorial-grid { display:grid; grid-template-columns:1.15fr 1fr; column-gap:6%; row-gap:85px; align-items:start; }
 .works-editorial-card:nth-child(even) { padding-top:130px; }
@@ -143,8 +150,86 @@ html { scrollbar-gutter:stable; }
  .project-dialog-toolbar { height:62px; }
  .project-dialog-content { padding:28px 4px 32px; }
  .project-dialog-body { grid-template-columns:1fr; gap:28px; margin-top:28px; }
+ .project-dialog-action { align-items:stretch; flex-direction:column; }
+ .project-dialog-action a { justify-content:space-between; }
  .works-index-page { padding-top:114px; padding-bottom:56px; }
  .works-editorial-grid { grid-template-columns:1fr; row-gap:42px; }
  .works-editorial-card:nth-child(even) { padding-top:0; }
 }
 @media(prefers-reduced-motion:reduce) { .project-dialog-close { transition:none; } .works-editorial-image img,.works-open-icon { transition:none; } }
+
+/* Direction-aware navigation: keep its place in layout while the header glides away. */
+.header {
+  background:transparent;
+  transform:translateY(0);
+  transition:transform .48s cubic-bezier(.22,1,.36,1),opacity .3s ease;
+}
+.header::before {
+  transition:background .4s ease,box-shadow .4s ease,border-color .4s ease;
+  border-bottom:1px solid transparent;
+  pointer-events:none;
+}
+.header[data-floating=true]::before {
+  background:rgba(10,10,10,.84);
+  backdrop-filter:blur(18px) saturate(115%);
+  -webkit-backdrop-filter:blur(18px) saturate(115%);
+  border-bottom-color:rgba(255,255,255,.07);
+  box-shadow:0 12px 32px rgba(0,0,0,.16);
+}
+.header[data-hidden=true] {
+  transform:translateY(calc(-100% - 20px));
+  opacity:0;
+  pointer-events:none;
+}
+.header[data-hidden=true]:has(:focus-visible) {
+  transform:translateY(0);
+  opacity:1;
+  pointer-events:auto;
+}
+@media(prefers-reduced-motion:reduce) {
+  .header,.header::before { transition:none; }
+}
+
+/* Equal side tracks keep the navigation on the viewport centre, independent of branding. */
+.header { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); }
+.header .logo { grid-column:1; grid-row:1; justify-self:start; min-width:0; }
+.header nav.main-nav { grid-column:2; grid-row:1; justify-self:center; }
+.header .header-contact { grid-column:3; grid-row:1; justify-self:end; }
+@media(max-width:800px) {
+  .header { gap:8px; }
+  .header .logo .brand-signature { width:min(130px,100%); max-width:100%; }
+  .header .logo { width:100%; }
+  .header .header-contact { display:none; }
+}
+@media(max-width:480px) { .header .logo { display:none; } }
+
+/* Visual-system refinement: neutral ink, Chinese-first typography, restrained motion. */
+:root,.dark {
+  --background:#0b0b0b;
+  --foreground:#f0efeb;
+  --primary:#f0efeb;
+  --primary-foreground:#121212;
+  --muted:#1b1b1b;
+  --muted-foreground:#92928d;
+  --border:#2b2b2a;
+  --card:#141414;
+  --accent:#242424;
+}
+body {
+  background:#0b0b0b;
+  font-family:Inter,"SF Pro Display","SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-feature-settings:'kern' 1,'liga' 1;
+  text-rendering:optimizeLegibility;
+}
+::selection { background:#f0efeb; color:#111; }
+:focus-visible { outline-color:#f0efeb; }
+.eyebrow,.mono,.footer-bottom { font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace; }
+.header nav.main-nav {
+  padding:4px;
+  background:rgba(31,31,31,.72);
+  border-color:rgba(255,255,255,.1);
+  box-shadow:0 10px 30px rgba(0,0,0,.18);
+}
+.header nav a { padding:10px 20px; }
+.nav-active-pill { background:#efefeb; }
+.header nav.main-nav a.nav-menu-link { letter-spacing:.01em; }

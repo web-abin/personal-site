@@ -3,7 +3,7 @@
 // Fluid solver based on Pavel Dobryakov's WebGL Fluid Simulation (MIT).
 import { useEffect, useRef, useState } from 'react';
 
-const DEFAULT_BACK_COLOR = { r: 0.5, g: 0, b: 0 };
+const DEFAULT_BACK_COLOR = { r: 0, g: 0, b: 0 };
 
 function FluidCursor({
   SIM_RESOLUTION = 128,
@@ -20,8 +20,8 @@ function FluidCursor({
   COLOR_UPDATE_SPEED = 10,
   BACK_COLOR = DEFAULT_BACK_COLOR,
   TRANSPARENT = true,
-  RAINBOW_MODE = true,
-  COLOR = '#ff0000'
+  RAINBOW_MODE = false,
+  COLOR = '#ffffff'
 }) {
   const canvasRef = useRef(null);
   const animationFrameId = useRef(null);
@@ -68,7 +68,7 @@ export default function SplashCursor() {
     reduced.addEventListener('change', update);
     return () => { mouse.removeEventListener('change', update); reduced.removeEventListener('change', update); };
   }, []);
-  return enabled ? <FluidCursor /> : null;
+  return enabled ? <FluidCursor SPLAT_RADIUS={0.12} DENSITY_DISSIPATION={4.5} /> : null;
 }
 
 

@@ -17,7 +17,7 @@ export function HomeScrollScenes({ children }: { children: ReactNode }) {
         main.querySelector<T>(selector)!;
       const hero = query('.new-hero');
       const title = query('.new-hero-title');
-      const wall = query('.spatial-viewport');
+      const gallery = query('.home-gallery');
       const method = query('.home-method');
       const rows = gsap.utils.toArray<HTMLElement>('.method-row', main);
       const media = gsap.matchMedia();
@@ -29,22 +29,33 @@ export function HomeScrollScenes({ children }: { children: ReactNode }) {
         },
         (context) => {
           if (context.conditions?.reduced) return;
-          const zoom = { progress: 0 };
-          const updateWall = () => wall.dispatchEvent(new CustomEvent('gallery-scroll', { detail: zoom.progress }));
           if (!context.conditions?.desktop) {
             gsap.timeline({
-              defaults: { ease: 'none' },
+              defaults: { ease: 'power2.out' },
               scrollTrigger: {
                 trigger: hero,
                 start: 'top top',
-                end: '65% top',
-                scrub: 0.45,
+                end: '55% top',
+                scrub: 0.35,
                 invalidateOnRefresh: true,
               },
             })
-              .fromTo(title, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.7 }, 0)
-              .fromTo(zoom, { progress: 0 }, { progress: 1, duration: 1, onUpdate: updateWall }, 0);
-            return () => { zoom.progress = 0; updateWall(); };
+              .fromTo(title, { autoAlpha: 1 }, { autoAlpha: 0, y: -24, duration: 0.75 }, 0)
+              .fromTo(gallery, { scale: 1 }, { scale: 1.035, autoAlpha: 0.45, duration: 1 }, 0);
+            gsap.utils.toArray<HTMLElement>('[data-home-reveal]', main).forEach((section) => {
+              const items = section.querySelectorAll<HTMLElement>('[data-home-reveal-item]');
+              gsap.from(items.length ? [...items] : section, {
+                autoAlpha: 0, y: 26, duration: 0.7, stagger: 0.07, ease: 'power3.out',
+                scrollTrigger: { trigger: section, start: 'top 86%', once: true },
+              });
+            });
+            gsap.utils.toArray<HTMLElement>('[data-home-timeline]', main).forEach((section) => {
+              gsap.fromTo(section, { '--chapter-progress': 0 }, {
+                '--chapter-progress': 1, ease: 'none',
+                scrollTrigger: { trigger: section, start: 'top 78%', end: 'bottom 55%', scrub: 0.35 },
+              });
+            });
+            return;
           }
           method.classList.add('is-sequenced');
           main.classList.add('has-scroll-scenes');
@@ -55,7 +66,7 @@ export function HomeScrollScenes({ children }: { children: ReactNode }) {
               id: 'home-intro',
               trigger: hero,
               start: 'top top',
-              end: () => `+=${window.innerHeight * 1.8}`,
+              end: () => `+=${window.innerHeight * 0.9}`,
               pin: true,
               scrub: 0.6,
               anticipatePin: 1,
@@ -64,8 +75,8 @@ export function HomeScrollScenes({ children }: { children: ReactNode }) {
           });
           intro
             .addLabel('作品墙', 0)
-            .fromTo(zoom, { progress: 0 }, { progress: 1, duration: 1, onUpdate: updateWall }, 0)
-            .fromTo(title, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -38, duration: 0.55 }, 0.1)
+            .fromTo(gallery, { scale: 1, autoAlpha: 1 }, { scale: 1.055, autoAlpha: 0.28, duration: 1 }, 0)
+            .fromTo(title, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -34, duration: 0.7 }, 0.08)
             .addLabel('进入下一幕', 1);
 
           gsap.set(rows, { autoAlpha: 0, y: 65 });
@@ -101,62 +112,20 @@ export function HomeScrollScenes({ children }: { children: ReactNode }) {
             0,
           );
 
-          const story = query('.home-story');
-          const entries = gsap.utils.toArray<HTMLElement>(
-            '.story-timeline article',
-            main,
-          );
-          const history = gsap.timeline({
-            scrollTrigger: {
-              id: 'home-history',
-              trigger: story,
-              start: 'top top',
-              end: () => `+=${window.innerHeight * 0.9}`,
-              pin: true,
-              scrub: 0.6,
-              anticipatePin: 1,
-              invalidateOnRefresh: true,
-            },
+          gsap.utils.toArray<HTMLElement>('[data-home-reveal]', main).forEach((section) => {
+            const items = section.querySelectorAll<HTMLElement>('[data-home-reveal-item]');
+            gsap.from(items.length ? [...items] : section, {
+              autoAlpha: 0, y: 30, duration: 0.78, stagger: 0.08, ease: 'power3.out',
+              scrollTrigger: { trigger: section, start: 'top 82%', once: true },
+            });
           });
-          history.from(
-            entries,
-            {
-              autoAlpha: 0,
-              y: 55,
-              stagger: 0.32,
-              duration: 0.5,
-              ease: 'power2.out',
-            },
-            0.1,
-          );
-
-          const about = query('.home-about-panel');
-          gsap
-            .timeline({
-              scrollTrigger: {
-                id: 'home-about',
-                trigger: about,
-                start: 'top top',
-                end: () => `+=${window.innerHeight * 0.75}`,
-                pin: true,
-                scrub: 0.6,
-                anticipatePin: 1,
-                invalidateOnRefresh: true,
-              },
-            })
-            .from(
-              query('.about-placeholder'),
-              { scale: 0.86, autoAlpha: 0.15, duration: 1, ease: 'none' },
-              0,
-            )
-            .from(
-              query('.home-about-text'),
-              { y: 70, autoAlpha: 0, duration: 0.65, ease: 'power2.out' },
-              0.2,
-            );
+          gsap.utils.toArray<HTMLElement>('[data-home-timeline]', main).forEach((section) => {
+            gsap.fromTo(section, { '--chapter-progress': 0 }, {
+              '--chapter-progress': 1, ease: 'none',
+              scrollTrigger: { trigger: section, start: 'top 72%', end: 'bottom 48%', scrub: 0.45 },
+            });
+          });
           return () => {
-            zoom.progress = 0;
-            updateWall();
             method.classList.remove('is-sequenced');
             main.classList.remove('has-scroll-scenes');
           };

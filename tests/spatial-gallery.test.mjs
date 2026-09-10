@@ -108,13 +108,14 @@ test('surface bends in both axes and wraps after arbitrarily long drags', () => 
     assert.equal(wrapPosition(x + 400, 400), v);
   }
 });
-test('held press retreats the wall, diagonal drag changes both spatial coordinates', () => {
+test('press keeps the wall still; only a real drag retreats it', () => {
   const f = fixture();
   f.pointer('pointerdown', 100, 100);
   f.settle();
-  assert.equal(f.world.style.transform, 'translateZ(-160px)');
+  assert.equal(f.world.style.transform, 'translateZ(0px)');
   f.pointer('pointermove', 250, 230);
   f.step();
+  assert.match(f.world.style.transform, /translateZ\(-[\d.]+px\)/);
   assert.equal(f.root.capture, 1);
   assert.match(f.tile.style.transform, /rotateY\(-/);
   assert.doesNotMatch(f.tile.style.transform, /rotateX\(0deg\)/);
@@ -122,6 +123,19 @@ test('held press retreats the wall, diagonal drag changes both spatial coordinat
   f.pointer('pointerup', 250, 230);
   f.settle();
   assert.notEqual(f.tile.style.transform, before);
+  assert.equal(f.world.style.transform, 'translateZ(0px)');
+  f.c.dispose();
+});
+test('click feedback scales only the pressed card without moving the wall', () => {
+  const f = fixture();
+  f.root.closest = () => f.tile;
+  f.pointer('pointerdown', 100, 100);
+  f.settle();
+  assert.match(f.tile.style.transform, /scale\(0\.965\)/);
+  assert.equal(f.world.style.transform, 'translateZ(0px)');
+  f.pointer('pointerup', 100, 100);
+  f.settle();
+  assert.doesNotMatch(f.tile.style.transform, /scale\(/);
   assert.equal(f.world.style.transform, 'translateZ(0px)');
   f.c.dispose();
 });
@@ -307,5 +321,25 @@ test('updates share one frame, stop offscreen, and restore the latest state on r
   f.settle();
   assert.equal(f.tile.style.visibility, 'visible');
   assert.doesNotMatch(f.tile.style.transform, /scale\(/);
+  f.c.dispose();
+});
+
+test('departure reverses entrance to the centre and ignores scroll scene updates until restored', () => {
+  const entrance = [{ progress: 1 }];
+  const f = fixture(entrance, { column: '2', row: '1' });
+  f.c.beginDeparture();
+  const scroll = new Event('gallery-scroll');
+  scroll.detail = 1;
+  f.root.dispatchEvent(scroll);
+  entrance[0].progress = 0;
+  f.c.renderEntrance();
+  f.step();
+  assert.equal(f.tile.style.opacity, '0');
+  assert.match(f.tile.style.transform, /translate3d\(0px,0px,-460px\)/);
+  f.c.cancelDeparture();
+  entrance[0].progress = 1;
+  f.c.renderEntrance();
+  f.step();
+  assert.ok(Number(f.tile.style.opacity) > 0);
   f.c.dispose();
 });

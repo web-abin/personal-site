@@ -1,8 +1,33 @@
 .header.header--minimal { justify-content:center; }
+.footer--quiet { padding-top:0; }
+.footer--quiet .footer-bottom { border-top:0; }
 .detail-full-cover { width:100%; height:min(65svh,720px); background:#111; margin:32px 0; }
 .detail-full-cover img { display:block; width:100%; height:100%; object-fit:contain; }
+.detail-carousel { position:relative; margin:32px 0; }
+.detail-carousel .detail-full-cover { margin:0; }
+.detail-carousel [data-slot='carousel-content'] { border-radius:2px; }
+.project-carousel-previous,.project-carousel-next { z-index:2; width:42px; height:42px; border-color:#ffffff25!important; background:#111c!important; color:#fff!important; }
+.project-carousel-previous { left:18px!important; }
+.project-carousel-next { right:18px!important; }
+.project-carousel-status { position:absolute; z-index:2; right:18px; bottom:16px; padding:7px 10px; border-radius:999px; background:#000a; color:#ddd; font:11px/1 monospace; }
 .detail-content-section { max-width:800px; margin:56px auto; }
 .detail-content-section h2 { font-size:28px; margin-bottom:16px; }
 .detail-content-section p { font-size:16px; line-height:1.9; color:#aaa; }
+.detail-content-section ul { display:grid; gap:12px; padding-left:20px; color:#aaa; }
+.detail-content-section li { padding-left:5px; font-size:15px; line-height:1.8; }
 .detail-content-section img { display:block; width:100%; max-height:75svh; object-fit:contain; margin-top:24px; }
-@media(max-width:700px) { .detail-full-cover { height:45svh; } }
+.detail-actions { display:flex; justify-content:flex-end; align-items:center; gap:14px; padding:36px 0; }
+.detail-actions--top { justify-content:flex-start; padding:8px 0 0; }
+.detail-actions a { display:inline-flex; align-items:center; gap:24px; border-radius:999px; padding:14px 20px; font-size:14px; }
+.detail-experience-link { background:#edf2e4; color:#111; }
+.detail-experience-link:hover { background:#fff; }
+.detail-article-link { border:1px solid #ffffff22; color:#ddd; }
+.detail-article-link:hover { border-color:#ffffff50; }
+@media(max-width:700px) {
+  .detail-full-cover { height:45svh; }
+  .project-carousel-previous,.project-carousel-next { width:36px; height:36px; }
+  .project-carousel-previous { left:10px!important; }
+  .project-carousel-next { right:10px!important; }
+  .detail-actions { align-items:stretch; flex-direction:column; }
+  .detail-actions a { justify-content:space-between; }
+}
