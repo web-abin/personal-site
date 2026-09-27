@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scroll Precision Motion Replica</title>
+
+  <style>
+    :root {
+      --color-red: #f40c3f;
+      --color-black: #0c0002;
+      --font-family: "Impact", "Arial Black", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--color-black);
+      overflow-x: hidden;
+    }
+
+    /* 滚动轨道：设置足够高度以容纳滚动进度 */
+    .scroll-track {
+      height: 500vh;
+      position: relative;
+      width: 100%;
+    }
+
+    /* 视口固定层 */
+    .viewport {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ============================================================
+       【底层 Bottom Layer】
+       黑底 + 红色点阵 + WORK 字母阵列 + 浮动作品卡片
+    ============================================================ */
+    .bottom-layer {
+      position: absolute;
+      inset: 0;
+      background-color: var(--color-black);
+      z-index: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .dot-pattern {
+      position: absolute;
+      inset: 0;
+      background-size: 16px 16px;
+      background-image: radial-gradient(circle, var(--color-red) 1.5px, transparent 1.5px);
+      opacity: 0.25;
+      z-index: 1;
+    }
+
+    /* WORK 矩阵容器 */
+    .matrix-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 2;
+    }
+
+    .matrix-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 18vh;
+      line-height: 1;
+    }
+
+    .matrix-char {
+      font-family: var(--font-family);
+      color: var(--color-red);
+      font-size: 16vh;
+      font-weight: 900;
+      display: inline-block;
+      text-align: center;
+      flex-shrink: 0;
+      letter-spacing: -2px;
+      transition: all 0.05s linear;
+    }
+
+    /* 隐藏除中心以外的字母（由滚动动态展开） */
+    .matrix-char.side-char {
+      opacity: 0;
+      max-width: 0px;
+      overflow: hidden;
+    }
+
+    /* 作品卡片区域 */
+    .cards-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100vw;
+      height: 100vh;
+      z-index: 5;
+      pointer-events: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .card-item {
+      position: absolute;
+      width: 480px;
+      height: 300px;
+      background-color: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+      border: 2px solid rgba(255,255,255,0.3);
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .card-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* ============================================================
+       【顶层 Top Mask Layer】
+       红底黑网格 + 胶囊镂空洞
+    ============================================================ */
+    .top-mask-layer {
+      position: absolute;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 10;
+      pointer-events: none;
+      transform-origin: center center;
+      transform: scale(1);
+    }
+
+    #maskCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .capsule-border {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 220px;
+      height: 580px;
+      transform: translate(-50%, -50%);
+      border: 3.5px solid var(--color-black);
+      border-radius: 110px;
+      z-index: 12;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 滚动长轨道 -->
+  <div class="scroll-track" id="scrollTrack"></div>
+
+  <!-- 屏幕视口（固定在画面中央） -->
+  <div class="viewport">
+
+    <!-- 底层：黑底红字 WORK + 滚动散开 -->
+    <div class="bottom-layer">
+      <div class="dot-pattern"></div>
+
+      <div class="matrix-container" id="matrixContainer">
+        <div class="matrix-row" id="rowW"></div>
+        <div class="matrix-row" id="rowO"></div>
+        <div class="matrix-row" id="rowR"></div>
+        <div class="matrix-row" id="rowK"></div>
+      </div>
+
+      <!-- 作品展示卡片组 -->
+      <div class="cards-container" id="cardsContainer">
+        <div class="card-item c1" id="c1"><img src="https://picsum.photos/600/380?random=11" alt="work1"></div>
+        <div class="card-item c2" id="c2"><img src="https://picsum.photos/600/380?random=12" alt="work2"></div>
+        <div class="card-item c3" id="c3"><img src="https://picsum.photos/600/380?random=13" alt="work3"></div>
+      </div>
+    </div>
+
+    <!-- 顶层：红底黑网格 + 胶囊洞遮罩 -->
+    <div class="top-mask-layer" id="topMaskLayer">
+      <canvas id="maskCanvas"></canvas>
+      <div class="capsule-border" id="capsuleBorder"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // 1. Canvas 实时精准绘制：红底背景 + 黑色粗网格 + 镂空胶囊洞
+    const canvas = document.getElementById('maskCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function drawCapsule(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function renderMask() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      canvas.width = w;
+      canvas.height = h;
+
+      // 红底背景
+      ctx.fillStyle = "#f40c3f";
+      ctx.fillRect(0, 0, w, h);
+
+      // 黑色网格
+      ctx.strokeStyle = "rgba(12, 0, 2, 0.9)";
+      ctx.lineWidth = 2;
+      const gridSize = 90;
+
+      ctx.beginPath();
+      for (let x = 0; x <= w; x += gridSize) {
+        ctx.moveTo(x, 0); ctx.lineTo(x, h);
+      }
+      for (let y = 0; y <= h; y += gridSize) {
+        ctx.moveTo(0, y); ctx.lineTo(w, y);
+      }
+      ctx.stroke();
+
+      // 抠出中央胶囊洞（透出底层 WORK）
+      const holeW = 220;
+      const holeH = 580;
+      const holeX = (w - holeW) / 2;
+      const holeY = (h - holeH) / 2;
+
+      ctx.globalCompositeOperation = 'destination-out';
+      drawCapsule(ctx, holeX, holeY, holeW, holeH, 110);
+      ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    renderMask();
+    window.addEventListener('resize', renderMask);
+
+    // 2. 动态生成 WORK 15 列矩阵
+    const rowIds = ['W', 'O', 'R', 'K'];
+    const splitCount = 15;
+    const midIdx = Math.floor(splitCount / 2); // 中间 index = 7
+
+    rowIds.forEach(char => {
+      const rowEl = document.getElementById(`row${char}`);
+      for (let i = 0; i < splitCount; i++) {
+        const span = document.createElement('span');
+        span.className = `matrix-char char-${char} ${i === midIdx ? 'center-char' : 'side-char'}`;
+        span.textContent = char;
+        span.dataset.index = i;
+        rowEl.appendChild(span);
+      }
+    });
+
+    const sideChars = document.querySelectorAll('.side-char');
+    const topMaskLayer = document.getElementById('topMaskLayer');
+    const capsuleBorder = document.getElementById('capsuleBorder');
+    const cardsContainer = document.getElementById('cardsContainer');
+    const c1 = document.getElementById('c1');
+    const c2 = document.getElementById('c2');
+    const c3 = document.getElementById('c3');
+
+    // 3. 原生原生页面 Scroll 滚动接管全套动画
+    window.addEventListener('scroll', () => {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = Math.min(Math.max(window.scrollY / maxScroll, 0), 1); // 0 到 1 的滚动进度
+
+      // 阶段 1 (0 ~ 0.45): 顶层红底网格放大穿透 + 字母向左右展开
+      if (progress <= 0.45) {
+        const p1 = progress / 0.45;
+        // 遮罩层 Scale 放大
+        const scaleVal = 1 + p1 * 14;
+        topMaskLayer.style.transform = `scale(${scaleVal})`;
+        topMaskLayer.style.opacity = p1 > 0.9 ? `${(1 - p1) * 10}` : '1';
+        capsuleBorder.style.opacity = `${1 - p1 * 2}`;
+
+        // 两侧字母宽度和透明度展开
+        sideChars.forEach(el => {
+          el.style.opacity = `${p1}`;
+          el.style.maxWidth = `${p1 * 120}px`;
+        });
+
+        cardsContainer.style.opacity = '0';
+      } 
+      // 阶段 2 (0.45 ~ 1.0): 顶层完全消失，作品卡片浮现并交错位移
+      else {
+        topMaskLayer.style.opacity = '0';
+        capsuleBorder.style.opacity = '0';
+        
+        sideChars.forEach(el => {
+          el.style.opacity = '1';
+          el.style.maxWidth = '120px';
+        });
+
+        const p2 = (progress - 0.45) / 0.55;
+        cardsContainer.style.opacity = '1';
+
+        // 卡片交错动画
+        c1.style.transform = `translate(0, 0) scale(${Math.min(1, p2 * 2)})`;
+        c2.style.transform = `translate(${-p2 * 140}px, ${-p2 * 30}px) scale(${Math.min(1, p2 * 1.8)})`;
+        c3.style.transform = `translate(${p2 * 140}px, ${p2 * 40}px) scale(${Math.min(1, p2 * 1.6)})`;
+      }
+    });
+  </script>
+</body>
+</html>

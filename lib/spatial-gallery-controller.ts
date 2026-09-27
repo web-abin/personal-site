@@ -13,6 +13,30 @@ export function projectTile(x: number, y: number, radius: number) {
   };
 }
 
+/** Find the four-card junction that is visually closest to a viewport point. */
+export function nearestProjectedGap(
+  pointerX: number,
+  pointerY: number,
+  offsetX: number,
+  offsetY: number,
+  cell: number,
+  radius: number,
+  perspective: number,
+) {
+  let nearest = { x: 0, y: 0, distance: Infinity };
+  for (let column = -5; column < 5; column++) {
+    const x = wrapPosition((column + 0.5) * cell + offsetX, cell * 9);
+    for (let row = -4; row < 4; row++) {
+      const y = wrapPosition((row + 0.5) * cell + offsetY, cell * 7);
+      const point = projectTile(x, y, radius);
+      const scale = perspective / Math.max(1, perspective - point.z);
+      const distance = Math.hypot(point.x * scale - pointerX, point.y * scale - pointerY);
+      if (distance < nearest.distance) nearest = { x, y, distance };
+    }
+  }
+  return nearest;
+}
+
 export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: number }[]) {
   const world = root.querySelector<HTMLElement>('.spatial-world')!;
   const tiles = [...world.querySelectorAll<HTMLElement>('.spatial-tile')];
@@ -22,7 +46,8 @@ export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: nu
   const coverUrls = coverImages.map(image => image?.src ?? '');
   let planar = false;
   let departing = false;
-  let scrollProgress = 0, scrollX = 0, scrollY = 0;
+  let scrollProgress = 0, scrollX = 0, scrollY = 0, scrollGapX = 0, scrollGapY = 0;
+  let pointerClientX: number | null = null, pointerClientY: number | null = null;
   let hovered: HTMLElement | null = null;
   let pressed: HTMLElement | null = null;
   const hoverAmounts = tiles.map(() => 0);
@@ -77,21 +102,27 @@ export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: nu
     const nextWorldTransform = `translateZ(${-hold * 160 + zoom}px)`;
     if (worldTransform !== nextWorldTransform) world.style.transform = worldTransform = nextWorldTransform;
     const align = Math.min(1, scrollProgress * 5);
-      const ox = scrollProgress ? scrollX + (cell / 2 - wrapPosition(scrollX, cell)) * align : x;
-      const oy = scrollProgress ? scrollY + (cell / 2 - wrapPosition(scrollY, cell)) * align : y;
+    const ox = scrollProgress ? scrollX - scrollGapX * align : x;
+    const oy = scrollProgress ? scrollY - scrollGapY * align : y;
     const flatten = Math.min(1, scrollProgress * 3);
     const magnify = Math.pow(Math.max(width, height) / 20 + 2, scrollProgress);
-    // Stop enlarging preserve-3d layers once the wall is flat. Render just the four
-    // visible image crops in viewport-sized 2D boxes, never a giant GPU surface.
-    const nextPlanar = flatten === 1;
+    // Prepaint the four bounded crops while they are hidden, then switch layers in
+    // one frame. Crossfading two slightly different projections creates a visible
+    // double-card "flash" at the centre junction.
+    const preparePlanar = scrollProgress >= 0.28;
+    const nextPlanar = scrollProgress >= 0.36;
     if (nextPlanar !== planar) {
       planar = nextPlanar;
-      world.style.display = planar ? 'none' : '';
-      zoomPlane.style.display = planar ? 'block' : 'none';
       if (!planar) written.forEach(item => { item.transform = item.opacity = item.visibility = ''; });
     }
-    if (planar) {
+    zoomPlane.style.display = 'block';
+    zoomPlane.style.opacity = '1';
+    world.style.opacity = '1';
+    zoomPlane.style.visibility = planar ? 'visible' : 'hidden';
+    world.style.visibility = planar ? 'hidden' : 'visible';
+    if (preparePlanar) {
       let slot = 0;
+      const centerY = height * (0.5 + 0.11 * Math.min(1, scrollProgress * 3));
       coordinates.forEach((position, index) => {
         const px = wrapPosition(position.column * cell + ox, cell * 9);
         const py = wrapPosition(position.row * cell + oy, cell * 7);
@@ -100,7 +131,7 @@ export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: nu
         if (!crop) return;
         const size = (cell - 24) * magnify;
         const left = width / 2 + px * magnify - size / 2;
-        const top = height * 0.42 + py * magnify - size / 2;
+        const top = centerY + py * magnify - size / 2;
         const x0 = Math.max(0, left), y0 = Math.max(0, top);
         const w = Math.max(0, Math.min(width, left + size) - x0);
         const h = Math.max(0, Math.min(height, top + size) - y0);
@@ -122,7 +153,7 @@ export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: nu
         crop.style.borderRadius = `${left >= 0 && top >= 0 ? r : 0}px ${left + size <= width && top >= 0 ? r : 0}px ${left + size <= width && top + size <= height ? r : 0}px ${left >= 0 && top + size <= height ? r : 0}px`;
       });
       crops.slice(slot).forEach(crop => { crop.style.display = 'none'; });
-      return;
+      if (planar) return;
     }
     tiles.forEach((tile, index) => {
       const px = wrapPosition(coordinates[index].column * cell + ox, cell * 9);
@@ -130,7 +161,7 @@ export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: nu
       const p = projectTile(px, py, radius);
       // Flatten towards the four-card junction before the camera passes through its black gap.
       p.x = (p.x + (px - p.x) * flatten) * magnify;
-      p.y = (p.y + (py - p.y) * flatten) * magnify;
+      p.y = (p.y + (py - p.y) * flatten) * magnify + height * 0.11 * Math.min(1, scrollProgress * 3);
       p.z *= 1 - flatten;
       p.rotateX *= 1 - flatten;
       p.rotateY *= 1 - flatten;
@@ -149,8 +180,8 @@ export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: nu
       const nextOpacity = `${alpha * Math.min(1, enter * 2)}`;
       const offscreen = flatten === 1 && (
         Math.abs(p.x) - (cell - 24) * scale / 2 > width / 2 + 2 ||
-        p.y - (cell - 24) * scale / 2 > height * 0.58 + 2 ||
-        p.y + (cell - 24) * scale / 2 < -height * 0.42 - 2
+        p.y - (cell - 24) * scale / 2 > height * 0.5 + 2 ||
+        p.y + (cell - 24) * scale / 2 < -height * 0.5 - 2
       );
       const nextVisibility = alpha < 0.01 || offscreen ? 'hidden' : 'visible';
       const previous = written[index];
@@ -229,6 +260,7 @@ export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: nu
     queue();
   }
   function move(e: PointerEvent) {
+    if (e.pointerType !== 'touch') rememberPointer(e.clientX, e.clientY);
     if (e.pointerId !== pointer) return;
     const distance = Math.hypot(e.clientX - startX, e.clientY - startY);
     if (!moved && distance < 6) return;
@@ -283,7 +315,17 @@ export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: nu
       suppressClick = false;
     }
   }
+  function rememberPointer(clientX: number, clientY: number) {
+    const rect = root.getBoundingClientRect();
+    const left = rect.left ?? 0;
+    const top = rect.top ?? 0;
+    if (clientX < left || clientX > left + rect.width || clientY < top || clientY > top + rect.height) return;
+    pointerClientX = clientX;
+    pointerClientY = clientY;
+  }
   function wheel(e: WheelEvent) {
+    // WheelEvent carries the cursor position even when the mouse has not moved recently.
+    rememberPointer(e.clientX, e.clientY);
     // Keep ordinary vertical page scrolling available. Horizontal trackpad motion pans the wall.
     if (e.ctrlKey || scrollProgress > 0) return;
     if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
@@ -344,6 +386,7 @@ export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: nu
   }
   function hover(e: PointerEvent) {
     if (e.pointerType === 'touch') return;
+    rememberPointer(e.clientX, e.clientY);
     hovered = (e.target as Element).closest<HTMLElement>('.spatial-tile');
     queue();
   }
@@ -357,6 +400,18 @@ export function mountSpatialGallery(root: HTMLElement, entrance?: { progress: nu
       flingX = flingY = 0;
       scrollX = tx = x;
       scrollY = ty = y;
+      const rect = root.getBoundingClientRect();
+      const focus = nearestProjectedGap(
+        (pointerClientX ?? (rect.left ?? 0) + width / 2) - (rect.left ?? 0) - width / 2,
+        (pointerClientY ?? (rect.top ?? 0) + height * 0.43) - (rect.top ?? 0) - height * 0.43,
+        scrollX,
+        scrollY,
+        cell,
+        radius,
+        radius * 0.94,
+      );
+      scrollGapX = focus.x;
+      scrollGapY = focus.y;
       hovered = null;
     }
     if (progress === 0 && scrollProgress > 0) {

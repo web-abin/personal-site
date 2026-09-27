@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Cylinder Wall - Curve Direction Corrected</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&display=swap">
+
+    <style>
+        :root {
+            --color-red: #f40c3f;
+            --color-black: #0c0002;
+            --font-family: 'Barlow Condensed', 'Impact', 'Arial Narrow', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        html,
+        body {
+            width: 100%;
+            background: var(--color-black);
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .scroll-track {
+            height: 2000vh;
+            width: 100%;
+            pointer-events: none;
+        }
+
+        .hero-blank-page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--color-black);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .hero-blank-page h1 {
+            color: rgba(255, 255, 255, 0.4);
+            font-family: sans-serif;
+            font-weight: 300;
+            letter-spacing: 3px;
+            font-size: 1.1rem;
+        }
+
+        .viewport {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .bottom-layer {
+            position: absolute;
+            inset: 0;
+            background-color: var(--color-black);
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            perspective: 1200px;
+            perspective-origin: 50% 50%;
+            transform-style: preserve-3d;
+        }
+
+        .dot-pattern {
+            position: absolute;
+            inset: 0;
+            background-size: 16px 16px;
+            background-image: radial-gradient(circle, var(--color-red) 1.5px, transparent 1.5px);
+            opacity: 0.3;
+            z-index: 1;
+        }
+
+        .matrix-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+            transform-style: preserve-3d;
+        }
+
+        .matrix-row {
+            position: relative;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform-style: preserve-3d;
+        }
+
+        .matrix-char {
+            position: absolute;
+            font-family: var(--font-family);
+            color: var(--color-red);
+            font-weight: 900;
+            line-height: 0.85;
+            text-align: center;
+            opacity: 1 !important;
+            text-transform: uppercase;
+            will-change: transform;
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+        }
+
+        .cards-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100vw;
+            height: 100vh;
+            z-index: 5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transform-style: preserve-3d;
+        }
+
+        .card-item {
+            position: absolute;
+            background-color: #111;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.9);
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
+            will-change: transform;
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+        }
+
+        .card-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .top-mask-layer {
+            position: absolute;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 100;
+            pointer-events: none;
+            will-change: transform, opacity;
+            transform-origin: center center;
+
+            background-color: var(--color-red);
+            background-image: linear-gradient(to right, var(--color-black) 2.5px, transparent 2.5px),
+                linear-gradient(to bottom, var(--color-black) 2.5px, transparent 2.5px);
+            background-size: 108px 90px;
+
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center center;
+            mask-position: center center;
+            -webkit-mask-size: 100% 100%;
+            mask-size: 100% 100%;
+        }
+
+        .capsule-border {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 252px;
+            height: 612px;
+            margin-left: -126px;
+            margin-top: -306px;
+            border: 3.5px solid var(--color-black);
+            border-radius: 126px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="hero-blank-page">
+        <h1> 向下滚动进入 WORK 3D 环形墙 </h1>
+    </div>
+
+    <div class="scroll-track"></div>
+
+    <div class="viewport">
+
+        <div class="bottom-layer">
+            <div class="dot-pattern"></div>
+
+            <div class="matrix-container" id="matrixContainer">
+                <div class="matrix-row" id="rowW"></div>
+                <div class="matrix-row" id="rowO"></div>
+                <div class="matrix-row" id="rowR"></div>
+                <div class="matrix-row" id="rowK"></div>
+            </div>
+
+            <div class="cards-container" id="cardsContainer"></div>
+        </div>
+
+        <div class="top-mask-layer" id="topMaskLayer">
+            <div class="capsule-border"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // ============================================================
+        // 🎛️ 全局核心配置项说明
+        // ============================================================
+        const CONFIG = {
+            // 字母未展开（初始缩放/汇聚）时的最小高度（像素 px）
+            letterMinHeight: 136,
+
+            // 字母完全展开后的最大基础高度（像素 px）
+            letterMaxHeight: 150,
+
+            // 四行字母（W, O, R, K）之间的垂直间距（像素 px）
+            rowGap: 0,
+
+            // ----------------------------------------------------------
+            // 弧形弯曲系数 (Y轴偏移程度)：
+            // 负数 (-)：两侧字母向上抬升（形成向上凹的 U 型弧度，如 W、O 行）
+            // 正数 (+)：两侧字母向下沉降（形成向下凸弧度，如 R、K 行）
+            // 数值绝对值越大，弯曲弧度越剧烈；数值越接近 0，越平缓
+            // ----------------------------------------------------------
+            curves: {
+                'W': -2, // W 行：强力向上凹（两侧显著向屏幕顶部抬升）
+                'O': -0.40, // O 行：平缓向上凹
+                'R': 0.40, // R 行：平缓向下凸
+                'K': 3  // K 行：强力向下凸（两侧显著向屏幕底部沉降）
+            },
+
+            // ----------------------------------------------------------
+            // 字母横向排列步长（相邻两个相同字母之间的 X 轴像素间距）
+            // 适当调大可以增加该行字母的字距，调小可使字母排列更紧密
+            // ----------------------------------------------------------
+            horizontalSteps: {
+                'W': 135, // W 字母比较宽，需要较大的横向步长
+                'O': 102, // O 字母步长
+                'R': 100, // R 字母步长
+                'K': 118  // K 字母步长
+            },
+
+            // ----------------------------------------------------------
+            // 页面滚动时，各行字母水平循环平移的相对速度倍率
+            // 数值越大，滚动页面时该行字母向左平移走得越快，形成错落有致的层叠动态感
+            // ----------------------------------------------------------
+            scrollSpeeds: {
+                'W': 2.2, // W 行移动速度最快
+                'O': 0.8, // O 行移动较慢，形成对比
+                'R': 1.3, // R 行中等速度
+                'K': 2.2  // K 行快速移动
+            },
+
+            // 穿插显示的图片卡片之间的横向间距（像素 px）
+            cardSpacing: 700,
+
+            // ----------------------------------------------------------
+            // 卡片在横向移动过程中的 RotateZ 倾斜旋转系数
+            // 配合 Ease 计算，让卡片在移动时产生逼真的动态微倾斜/摆动效果
+            // ----------------------------------------------------------
+            cardRotations: {
+                top: -0.008,   // 上排卡片向左/向右移动时的倾斜旋转系数
+                bottom: 0.008  // 下排卡片向左/向右移动时的倾斜旋转系数（与上排方向相反）
+            }
+        };
+
+        const cardsList = [
+            { img: 'https://picsum.photos/600/380?random=11', width: 450, height: 270 },
+            { img: 'https://picsum.photos/500/500?random=12', width: 380, height: 280 },
+            { img: 'https://picsum.photos/700/350?random=13', width: 470, height: 260 },
+            { img: 'https://picsum.photos/600/450?random=14', width: 390, height: 290 },
+            { img: 'https://picsum.photos/650/380?random=15', width: 450, height: 270 },
+            { img: 'https://picsum.photos/550/350?random=16', width: 400, height: 270 },
+            { img: 'https://picsum.photos/600/400?random=17', width: 430, height: 280 },
+            { img: 'https://picsum.photos/500/400?random=18', width: 400, height: 280 },
+            { img: 'https://picsum.photos/650/420?random=19', width: 460, height: 260 },
+            { img: 'https://picsum.photos/700/400?random=20', width: 440, height: 270 }
+        ];
+
+        function createCapsuleMaskImage() {
+            const canvas = document.createElement('canvas');
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            canvas.width = w;
+            canvas.height = h;
+
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, w, h);
+
+            const capW = 220;
+            const capH = 580;
+            const x = (w - capW) / 2;
+            const y = (h - capH) / 2;
+            const r = capW / 2;
+
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.roundRect(x, y, capW, capH, r);
+            ctx.fill();
+
+            return canvas.toDataURL();
+        }
+
+        const maskLayer = document.getElementById('topMaskLayer');
+        function applyGeneratedMask() {
+            const maskDataUrl = createCapsuleMaskImage();
+            maskLayer.style.webkitMaskImage = `url(${maskDataUrl})`;
+            maskLayer.style.maskImage = `url(${maskDataUrl})`;
+        }
+        applyGeneratedMask();
+        window.addEventListener('resize', applyGeneratedMask);
+
+        const CHAR_COUNT = 35;
+        const matrixContainer = document.getElementById('matrixContainer');
+        const cardsContainer = document.getElementById('cardsContainer');
+
+        matrixContainer.style.gap = `${CONFIG.rowGap}px`;
+
+        ['W', 'O', 'R', 'K'].forEach(char => {
+            const rowEl = document.getElementById(`row${char}`);
+            rowEl.style.height = `${CONFIG.letterMaxHeight}px`;
+            const midIdx = Math.floor(CHAR_COUNT / 2);
+
+            for (let i = 0; i < CHAR_COUNT; i++) {
+                const span = document.createElement('span');
+                span.className = 'matrix-char';
+                span.textContent = char;
+                span.dataset.char = char;
+                span.dataset.index = i - midIdx;
+                rowEl.appendChild(span);
+            }
+        });
+
+        cardsList.forEach((data, idx) => {
+            const div = document.createElement('div');
+            div.className = 'card-item';
+            div.style.width = `${data.width}px`;
+            div.style.height = `${data.height}px`;
+            div.innerHTML = `<img src="${data.img}" alt="work-${idx}">`;
+            cardsContainer.appendChild(div);
+        });
+
+        const allMatrixChars = document.querySelectorAll('.matrix-char');
+        const cards = Array.from(document.querySelectorAll('.card-item'));
+
+        const SCALE_X = 0.792;
+        const RADIUS = 1800;
+
+        function applyCylinderTransform(el, xOffset, yOffset, extraScaleX = SCALE_X, rotateZDeg = 0) {
+            const theta = xOffset / RADIUS;
+            const translateZ = -RADIUS * (1 - Math.cos(theta));
+            const rotateYDeg = (theta * 180 / Math.PI) * 0.45;
+
+            el.style.transform = `
+        translate3d(${xOffset}px, ${yOffset}px, ${translateZ}px)
+        rotateY(${rotateYDeg}deg)
+        rotateZ(${rotateZDeg}deg)
+        scaleX(${extraScaleX})
+      `;
+        }
+
+        // 两侧字号渐进放至 1.05 倍
+        function calculateCharFontSize(baseHeight, xOffset) {
+            const halfWidth = window.innerWidth / 2;
+            const distRatio = Math.min(Math.abs(xOffset) / halfWidth, 1.0);
+            const scale = 1.0 + distRatio * 0.05;
+            return baseHeight * scale;
+        }
+
+        function getEasedXOffset(linearX) {
+            const activeZone = window.innerWidth * 0.55;
+            if (Math.abs(linearX) > activeZone) return linearX;
+
+            const norm = linearX / activeZone;
+            const sign = Math.sign(norm);
+            const absNorm = Math.abs(norm);
+
+            const easedNorm = Math.pow(absNorm, 1.8);
+            return sign * easedNorm * activeZone;
+        }
+
+        function updateMotion() {
+            const scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+            const totalHeight = (document.documentElement.scrollHeight || document.body.scrollHeight) - window.innerHeight;
+            const progress = totalHeight > 0 ? Math.min(Math.max(scrollTop / totalHeight, 0), 1) : 0;
+
+            const ENTER_END = 0.08;
+            const EXPAND_END = 0.22;
+            const EXIT_START = 0.88;
+
+            if (progress <= ENTER_END) {
+                const p0 = progress / ENTER_END;
+                const translateYVal = (1 - p0) * 100;
+
+                maskLayer.style.transform = `translateY(${translateYVal}vh) scale(1)`;
+                maskLayer.style.opacity = '1';
+
+                allMatrixChars.forEach(el => {
+                    el.style.fontSize = `${CONFIG.letterMinHeight}px`;
+                    applyCylinderTransform(el, 0, 0);
+                });
+
+                cardsContainer.style.opacity = '0';
+            }
+            else if (progress <= EXPAND_END) {
+                const p1 = (progress - ENTER_END) / (EXPAND_END - ENTER_END);
+
+                const maskScaleVal = 1 + p1 * 22;
+                maskLayer.style.transform = `translateY(0vh) scale(${maskScaleVal})`;
+                maskLayer.style.opacity = p1 > 0.88 ? `${(1 - p1) * 8.3}` : '1';
+
+                const currentHeight = CONFIG.letterMinHeight + (CONFIG.letterMaxHeight - CONFIG.letterMinHeight) * p1;
+
+                allMatrixChars.forEach(el => {
+                    const char = el.dataset.char;
+                    const idx = parseFloat(el.dataset.index);
+                    const step = CONFIG.horizontalSteps[char];
+
+                    const xOffset = idx * step * p1;
+                    const fontPx = calculateCharFontSize(currentHeight, xOffset);
+                    el.style.fontSize = `${fontPx}px`;
+
+                    const normDist = xOffset / step;
+                    // 计算 Y 轴弯曲偏移量
+                    const yCurve = (normDist * normDist) * CONFIG.curves[char] * p1;
+
+                    applyCylinderTransform(el, xOffset, yCurve);
+                });
+
+                cardsContainer.style.opacity = '0';
+            }
+            else if (progress <= EXIT_START) {
+                maskLayer.style.opacity = '0';
+                cardsContainer.style.opacity = '1';
+
+                const p2 = (progress - EXPAND_END) / (EXIT_START - EXPAND_END);
+
+                const screenMargin = window.innerWidth / 2 + 800;
+                const totalTravelDistance = (cards.length * CONFIG.cardSpacing) + (screenMargin * 2);
+                const currentShift = screenMargin - (p2 * totalTravelDistance);
+
+                // WORK 字母移动与弯曲
+                const globalLetterDistance = p2 * 7000;
+                allMatrixChars.forEach(el => {
+                    const char = el.dataset.char;
+                    const idx = parseFloat(el.dataset.index);
+                    const speed = CONFIG.scrollSpeeds[char];
+                    const step = CONFIG.horizontalSteps[char];
+
+                    const totalSpan = CHAR_COUNT * step;
+                    let rawX = (idx * step) - (globalLetterDistance * speed);
+
+                    let loopedX = ((rawX + totalSpan / 2) % totalSpan);
+                    if (loopedX < 0) loopedX += totalSpan;
+                    loopedX -= totalSpan / 2;
+
+                    const fontPx = calculateCharFontSize(CONFIG.letterMaxHeight, loopedX);
+                    el.style.fontSize = `${fontPx}px`;
+
+                    const normDist = loopedX / step;
+                    const yCurve = (normDist * normDist) * CONFIG.curves[char];
+
+                    applyCylinderTransform(el, loopedX, yCurve);
+                });
+
+                // 卡片轨迹
+                cards.forEach((card, idx) => {
+                    const isTopTrack = idx % 2 === 0;
+
+                    const linearX = currentShift + (idx * CONFIG.cardSpacing);
+                    const easedX = getEasedXOffset(linearX);
+
+                    const trackBaseY = isTopTrack ? -145 : 145;
+                    const normDist = easedX / 280;
+                    const curveY = (normDist * normDist) * (isTopTrack ? -12 : 12);
+                    const finalY = trackBaseY + curveY;
+
+                    const rotateFactor = isTopTrack ? CONFIG.cardRotations.top : CONFIG.cardRotations.bottom;
+                    const rotateZDeg = easedX * rotateFactor;
+
+                    applyCylinderTransform(card, easedX, finalY, 1.0, rotateZDeg);
+                });
+            }
+            else {
+                cardsContainer.style.opacity = '0';
+
+                const p3 = (progress - EXIT_START) / (1 - EXIT_START);
+
+                const maskScaleVal = 23 - p3 * 22;
+                maskLayer.style.transform = `translateY(0vh) scale(${maskScaleVal})`;
+                maskLayer.style.opacity = p3 < 0.12 ? `${p3 * 8.3}` : '1';
+
+                const currentHeight = CONFIG.letterMaxHeight - (CONFIG.letterMaxHeight - CONFIG.letterMinHeight) * p3;
+
+                allMatrixChars.forEach(el => {
+                    const char = el.dataset.char;
+                    const idx = parseFloat(el.dataset.index);
+                    const step = CONFIG.horizontalSteps[char];
+
+                    const xOffset = idx * step * (1 - p3);
+                    const fontPx = calculateCharFontSize(currentHeight, xOffset);
+                    el.style.fontSize = `${fontPx}px`;
+
+                    const normDist = xOffset / step;
+                    const yCurve = (normDist * normDist) * CONFIG.curves[char] * (1 - p3);
+
+                    applyCylinderTransform(el, xOffset, yCurve);
+                });
+            }
+        }
+
+        window.addEventListener('scroll', updateMotion, { passive: true });
+        updateMotion();
+    </script>
+</body>
+
+</html>

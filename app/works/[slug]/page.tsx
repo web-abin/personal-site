@@ -7,6 +7,13 @@ import { Header, Footer, Label } from '@/components/site-shell';
 import { ProjectMediaCarousel } from '@/components/project-media-carousel';
 import './detail.css';
 type Props = { params: Promise<{ slug: string }> };
+
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return projects.map((project) => ({ slug: project.slug }));
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const p = projects.find((p) => p.slug === slug);

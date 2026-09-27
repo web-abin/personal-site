@@ -14,13 +14,12 @@
 .works-heading h1 { font-size:clamp(64px,8vw,132px); font-weight:500; line-height:.92; letter-spacing:-.075em; }
 .works-heading h1 span { color:#6f6f6a; }
 .works-heading>p { color:#8f8f89; font-size:14px; line-height:1.9; }
-.works-masonry { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:96px 38px; padding-top:0; }
-.works-masonry-card { min-width:0; }
-.works-masonry-card:nth-child(even) { transform:translateY(110px); }
+.works-masonry { column-count:2; column-gap:38px; padding-top:0; }
+.works-masonry-card { display:inline-block; width:100%; min-width:0; margin:0 0 56px; break-inside:avoid; }
 .works-masonry-card a { display:block; }
-.works-masonry-image { position:relative; overflow:hidden; aspect-ratio:4/3; background:#151515; border-radius:7px; }
+.works-masonry-image { position:relative; overflow:hidden; width:100%; background:#151515; border-radius:7px; }
 .works-masonry-image::after { content:''; position:absolute; inset:0; background:#0000000d; pointer-events:none; transition:background .4s; }
-.works-masonry-image img { display:block; width:100%; height:100%; object-fit:cover; transition:transform .7s cubic-bezier(.22,1,.36,1),filter .4s; }
+.works-masonry-image img { display:block; width:100%; height:auto; transition:filter .4s; }
 .works-masonry-copy { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:0 24px; padding:22px 2px 0; }
 .works-masonry-meta { grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; color:#777773; font:10px/1.5 "SFMono-Regular",Consolas,monospace; letter-spacing:.05em; }
 .works-masonry-copy h2 { font-size:clamp(23px,2.1vw,34px); line-height:1.35; font-weight:480; letter-spacing:-.035em; margin:16px 0 10px; }
@@ -30,15 +29,14 @@
 .works-example { color:#777; font-size:11px; margin-top:12px; }
 .works-masonry-meta svg { transition:transform .35s cubic-bezier(.22,1,.36,1); }
 @media(hover:hover) {
-  .works-masonry-card a:hover img { transform:scale(1.025); filter:brightness(1.04); }
+  .works-masonry-card a:hover img { filter:brightness(1.04); }
   .works-masonry-card a:hover .works-masonry-image::after { background:transparent; }
   .works-masonry-card a:hover svg { transform:translate(4px,-4px); }
 }
 @media(max-width:900px) {
   .works-heading { grid-template-columns:1fr 1.5fr; }
   .works-heading>p { grid-column:2; }
-  .works-masonry { gap:72px 24px; }
-  .works-masonry-card:nth-child(even) { transform:translateY(70px); }
+  .works-masonry { column-gap:24px; }
 }
 @media(max-width:700px) {
   .works-directory-page.wrap { width:calc(100% - 40px); }
@@ -46,9 +44,8 @@
   .works-heading { display:block; padding-bottom:42px; }
   .works-heading h1 { margin-top:42px; font-size:clamp(56px,17.5vw,72px); white-space:nowrap; }
   .works-heading>p { margin-top:28px; font-size:13px; }
-  .works-masonry { grid-template-columns:1fr; gap:54px; padding-top:52px; }
-  .works-masonry-card:nth-child(even) { transform:none; }
-  .works-masonry-image { aspect-ratio:4/3; }
+  .works-masonry { column-count:1; padding-top:52px; }
+  .works-masonry-card { margin-bottom:54px; }
   .works-masonry-copy { display:block; padding-top:18px; }
   .works-masonry-tags { justify-content:flex-start; max-width:none; margin-top:14px; }
 }
