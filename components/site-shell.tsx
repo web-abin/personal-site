@@ -31,8 +31,13 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
       const delta = y - lastY;
       lastY = y;
       const beyondHero = y > window.innerHeight * 0.72;
+      const workSectionRect = document.getElementById('work')?.getBoundingClientRect();
+      const workSceneActive = document.documentElement.dataset.workSceneActive === 'true'
+        || Boolean(workSectionRect && workSectionRect.top <= 0 && workSectionRect.bottom > 0);
       element.dataset.floating = String(beyondHero);
-      if (!beyondHero || element.querySelector(':focus-visible')) {
+      if (workSceneActive) {
+        hidden = true;
+      } else if (!beyondHero || element.querySelector(':focus-visible')) {
         hidden = false;
       } else if (delta > 3) {
         hidden = true;
@@ -59,11 +64,13 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
     update();
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
+    window.addEventListener('workscenechange', update);
     element.addEventListener('focusin', onFocus);
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
+      window.removeEventListener('workscenechange', update);
       element.removeEventListener('focusin', onFocus);
     };
   }, [path]);
