@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { projects } from '@/lib/portfolio';
+import { getProjectMarkdownContent, projects } from '@/lib/portfolio';
 import { ProjectMarkdown } from '@/components/project-markdown';
 import { ProjectMediaCarousel } from '@/components/project-media-carousel';
 import { ProjectMetrics } from '@/components/project-metrics';
+import { ProjectHighlights } from '@/components/project-highlights';
 import { ProjectBackButton, ProjectPager } from '@/components/project-detail-navigation';
 import './detail.css';
 type Props = { params: Promise<{ slug: string }> };
@@ -48,7 +49,8 @@ export default async function ProjectPage({ params }: Props) {
         </div>
         <ProjectMediaCarousel title={p.title} cover={p.cover} gallery={p.gallery} />
         <ProjectMetrics metrics={p.metrics} />
-        <ProjectMarkdown content={p.content} />
+        <ProjectHighlights highlights={p.highlights} />
+        <ProjectMarkdown content={getProjectMarkdownContent(p)} />
       </div>
       <ProjectPager previous={previous} next={next} />
     </main>

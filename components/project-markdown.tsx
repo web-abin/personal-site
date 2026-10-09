@@ -96,7 +96,7 @@ export function ProjectMarkdown({ content }: { content: string }) {
         remarkPlugins={[remarkGfm]}
         components={{
           pre: MarkdownPre,
-          a: ({ children, ...props }) => (
+          a: ({ children, node: _node, ...props }) => (
             <a {...props} target="_blank" rel="noopener noreferrer">
               {children}
             </a>

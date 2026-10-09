@@ -1,5 +1,7 @@
 'use client';
 
+/* oxlint-disable next/no-img-element */
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowUpRight } from 'lucide-react';
@@ -12,7 +14,19 @@ import { WORK_CYLINDER_CONFIG as CONFIG } from '@/lib/work-cylinder-config';
 
 if (typeof window !== 'undefined') gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-const featuredProjects = projects.filter((project) => !project.sample).slice(0, 5);
+const featuredProjectSlugs = [
+  'clipzap',
+  'raglab',
+  'enterprise-knowledge-agent',
+  'tikie',
+  'kaixin-lianliankan',
+  'miniprogram-mcp',
+] as const;
+
+const featuredProjects = featuredProjectSlugs.flatMap((slug) => {
+  const project = projects.find((item) => item.slug === slug);
+  return project ? [project] : [];
+});
 const letters = ['W', 'O', 'R', 'K'] as const;
 type WorkLetter = typeof letters[number];
 const makeCharacterIndexes = (count: number) => Array.from(
@@ -51,6 +65,8 @@ export function WorkCylinder() {
     const cardSetters = cardElements.map((element) => ({
       transform: (value: string) => { element.style.transform = value; },
       opacity: (value: number) => { element.style.opacity = String(value); },
+      pointerEvents: (value: 'auto' | 'none') => { element.style.pointerEvents = value; },
+      zIndex: (value: number) => { element.style.zIndex = String(value); },
     }));
     const setMaskTransform = (value: string) => { mask.style.transform = value; };
     const setMaskOpacity = gsap.quickSetter(mask, 'opacity') as (value: number) => void;
@@ -61,8 +77,14 @@ export function WorkCylinder() {
     const getCardMetrics = () => {
       const viewportWidth = window.innerWidth;
       const compact = viewportWidth < 720;
-      const cardWidth = Math.max(245, Math.min(compact ? 330 : 510, viewportWidth * (compact ? 0.72 : 0.31)));
-      const spacing = CONFIG.cardSpacing * (compact ? 0.72 : 1);
+      const cardWidth = Math.max(
+        compact ? 250 : 300,
+        Math.min(compact ? 350 : 720, viewportWidth * (compact ? 0.78 : 0.4)),
+      );
+      const spacing = Math.max(
+        cardWidth * CONFIG.cardSpacingWidth,
+        viewportWidth * (compact ? 0.76 : CONFIG.cardSpacingViewport),
+      );
       const offscreenPadding = CONFIG.cardOffscreenPadding * (compact ? 0.55 : 1);
       // Start with the first card fully beyond the right edge and finish with
       // the final card equally far beyond the left edge.
@@ -126,24 +148,60 @@ export function WorkCylinder() {
 
       const shift = start - cardRun * totalTravel;
 
+      // A linear scroll used to make cards fastest at the centre of the
+      // cylinder. This symmetric distance remap does the opposite: cards move
+      // quickly at the edges, ease into the centre, then accelerate away.
+      const slowZone = Math.max(viewportWidth * CONFIG.cardCenterSlowZone, spacing * 0.72);
+      const mapCardDistance = (distance: number) => {
+        const sign = Math.sign(distance);
+        const normalized = Math.abs(distance) / slowZone;
+        if (normalized >= 1) {
+          const edgeSlope = CONFIG.cardCenterLinearWeight
+            + (1 - CONFIG.cardCenterLinearWeight) * CONFIG.cardCenterEasePower;
+          return sign * slowZone * (1 + (normalized - 1) * edgeSlope);
+        }
+        const eased = CONFIG.cardCenterLinearWeight * normalized
+          + (1 - CONFIG.cardCenterLinearWeight) * normalized ** CONFIG.cardCenterEasePower;
+        return sign * slowZone * eased;
+      };
+
+      const cardFrames = cardSetters.map((_, index) => {
+        const rawDistance = shift + index * spacing;
+        return { index, rawDistance, x: mapCardDistance(rawDistance) };
+      });
+      const visibleIndexes = new Set(
+        cardFrames
+          .filter(({ x }) => Math.abs(x) <= viewportWidth * 0.5 + cardWidth * 0.68)
+          .sort((a, b) => Math.abs(a.x) - Math.abs(b.x))
+          .slice(0, 2)
+          .map(({ index }) => index),
+      );
+
       cardSetters.forEach((setter, index) => {
-        const arcDistance = shift + index * spacing;
-        const arcLimit = start + cardWidth * 0.25;
-        const onVisibleArc = Math.abs(arcDistance) <= arcLimit;
-        const theta = Math.max(-1.12, Math.min(1.12, arcDistance / radius));
-        const x = radius * Math.sin(theta);
-        const z = radius * (Math.cos(theta) - 1);
-        const topTrack = index % 2 === 0;
-        const baseY = (compact ? 92 : 142) * (topTrack ? -1 : 1);
+        const { rawDistance, x } = cardFrames[index];
+        const onVisibleArc = visibleIndexes.has(index);
+        const theta = Math.max(-0.72, Math.min(0.72, x / radius));
         const cylinderDepth = radius * (1 - Math.cos(theta));
-        const curveY = cylinderDepth * 0.13 * (topTrack ? -1 : 1);
+        const topTrack = index % 2 === 0;
+        const baseYAmount = compact
+          ? Math.min(stageHeight * 0.14, cardWidth * 0.3)
+          : Math.min(stageHeight * 0.145, cardWidth * 0.23);
+        const baseY = baseYAmount * (topTrack ? -1 : 1);
+        const curveY = cylinderDepth * 0.08 * (topTrack ? -1 : 1);
         const edgeTheta = Math.asin(clamp((viewportWidth * 0.5) / radius, 0, 0.92));
         const edgeStrength = clamp(theta / Math.max(edgeTheta, 0.01), -1, 1);
-        const rotationY = -theta * 180 / Math.PI;
+        const rotationY = -theta * 180 / Math.PI * 0.92;
         const rotationZ = edgeStrength * (topTrack ? -CONFIG.cardBankMax : CONFIG.cardBankMax);
         const rotationX = Math.abs(edgeStrength) * (topTrack ? CONFIG.cardPitchMax : -CONFIG.cardPitchMax);
+        // Scale/depth stay linear even though horizontal travel deliberately
+        // eases around the centre.
+        const centerFocus = 1 - clamp(Math.abs(rawDistance) / (spacing * 0.48));
+        const scale = 1 + centerFocus * (CONFIG.cardCenterScale - 1);
+        const z = cylinderDepth - centerFocus * CONFIG.cardCenterDepth;
         setter.opacity(onVisibleArc ? 1 : 0);
-        setter.transform(`translate3d(${x}px, ${baseY + curveY}px, ${z}px) rotateZ(${rotationZ}deg) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`);
+        setter.pointerEvents(onVisibleArc ? 'auto' : 'none');
+        setter.zIndex(Math.round(10 + (1 - centerFocus) * 10));
+        setter.transform(`translate3d(${x}px, ${baseY + curveY}px, ${z}px) rotateZ(${rotationZ}deg) rotateX(${rotationX}deg) rotateY(${rotationY}deg) scale(${scale})`);
       });
 
       characterSetters.forEach((setter) => {
@@ -184,6 +242,13 @@ export function WorkCylinder() {
     const media = gsap.matchMedia();
     media.add('(prefers-reduced-motion: no-preference)', () => {
       render();
+      const progressTween = gsap.to(state, {
+        progress: state.progress,
+        duration: CONFIG.cardInertiaDuration,
+        ease: 'power2.out',
+        paused: true,
+        onUpdate: render,
+      });
       const workTrigger = ScrollTrigger.create({
         id: 'home-work-cylinder',
         trigger: section,
@@ -197,10 +262,10 @@ export function WorkCylinder() {
           window.dispatchEvent(new Event('workscenechange'));
         },
         onUpdate: (self) => {
-          state.progress = self.progress;
-          render();
+          progressTween.resetTo('progress', self.progress);
         },
         onRefresh: (self) => {
+          progressTween.pause();
           state.progress = self.progress;
           render();
         },
@@ -210,6 +275,7 @@ export function WorkCylinder() {
       window.dispatchEvent(new Event('workscenechange'));
       render();
       return () => {
+        progressTween.kill();
         workTrigger.kill();
         delete document.documentElement.dataset.workSceneActive;
         window.dispatchEvent(new Event('workscenechange'));
@@ -249,28 +315,32 @@ export function WorkCylinder() {
 
         <div className="work-cylinder__cards" data-work-cards>
           {featuredProjects.map((project, index) => (
-            <Link
-              href={`/works/${project.slug}?from=home`}
-              className="work-cylinder__card"
+            <div
+              className="work-cylinder__card-frame"
               data-work-card
               key={project.slug}
-              aria-label={`View ${project.english}`}
             >
-              <span className="work-cylinder__card-image">
-                <Image
-                  src={project.cover}
-                  alt={project.title}
-                  fill
-                  sizes="(max-width: 700px) 72vw, 31vw"
-                  priority={index < 2}
-                  draggable={false}
-                />
-              </span>
-              <span className="work-cylinder__card-copy">
-                <b>{project.title}</b>
-                <i>{project.category}</i>
-              </span>
-            </Link>
+              <Link
+                href={`/works/${project.slug}?from=home`}
+                className="work-cylinder__card"
+                aria-label={`View ${project.english}`}
+              >
+                <span className="work-cylinder__card-image">
+                  <img
+                    src={project.cover}
+                    alt={project.title}
+                    loading={index < 2 ? 'eager' : 'lazy'}
+                    fetchPriority={index < 2 ? 'high' : 'auto'}
+                    decoding="async"
+                    draggable={false}
+                  />
+                </span>
+                <span className="work-cylinder__card-copy">
+                  <b>{project.title}</b>
+                  <i>{project.category}</i>
+                </span>
+              </Link>
+            </div>
           ))}
         </div>
 

@@ -2,8 +2,8 @@
 import { useId, useRef } from 'react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { ArrowUpRight, X } from 'lucide-react';
-import type { Project } from '@/lib/portfolio';
+import { X } from 'lucide-react';
+import { getProjectMarkdownContent, type Project } from '@/lib/portfolio';
 import { ProjectMediaCarousel } from '@/components/project-media-carousel';
 import { ProjectMarkdown } from '@/components/project-markdown';
 import { ProjectMetrics } from '@/components/project-metrics';
@@ -60,7 +60,6 @@ export function ProjectDetailDialog({ project, origin, onClose }: {
       onClose();
     } else animation.current.timeScale(1.5).reverse();
   };
-  const experienceUrl = project?.experienceUrl && /^https?:\/\//i.test(project.experienceUrl) ? project.experienceUrl : undefined;
   return (
     <dialog ref={dialog} className="project-dialog" aria-labelledby={titleId} aria-describedby={descriptionId}
       onCancel={(event) => { event.preventDefault(); close(); }}
@@ -81,13 +80,9 @@ export function ProjectDetailDialog({ project, origin, onClose }: {
               {project.role && <><h3>我的角色</h3><p>{project.role}</p></>}
             </aside>
             <div className="project-story">
-              <ProjectMarkdown content={project.content} />
+              <ProjectMarkdown content={getProjectMarkdownContent(project)} />
             </div>
           </div>
-          {(experienceUrl || project.articleUrl) && <footer className="project-dialog-action">
-            {project.articleUrl && <a className="project-dialog-article" href={project.articleUrl} target="_blank" rel="noopener noreferrer">介绍文章 <ArrowUpRight size={18} /></a>}
-            {experienceUrl && <a href={experienceUrl} target="_blank" rel="noopener noreferrer">体验作品 <ArrowUpRight size={20} /></a>}
-          </footer>}
         </div>
       </article>}
     </dialog>
