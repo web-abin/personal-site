@@ -3,10 +3,12 @@ import { ArrowUpRight } from 'lucide-react';
 import { projects } from '@/lib/portfolio';
 export function WorksGallery() {
   return <div className="works-directory">
-    <h1 className="sr-only">我的作品</h1>
+    <header className="works-heading" data-reveal>
+      <h1>作品<span>集</span></h1>
+    </header>
     <div className="works-masonry">
       {projects.map((project, index) => <article className="works-masonry-card" data-reveal key={project.slug}>
-        <Link href={`/works/${project.slug}`} aria-label={`查看${project.title}详情`}>
+        <Link href={`/works/${project.slug}?from=works`} aria-label={`查看${project.title}详情`}>
           <div className="works-masonry-image"><img src={project.cover} alt={`${project.title}完整封面`} loading="lazy" /></div>
           <div className="works-masonry-copy">
             <div className="works-masonry-meta"><span>{String(index + 1).padStart(2, '0')} / {project.category}</span><ArrowUpRight size={18} /></div>

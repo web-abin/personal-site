@@ -25,7 +25,7 @@ export function HomeGallery() {
                 {repeated.map((project, index) => (
                   <Link
                     className="portfolio-flow-card"
-                    href={`/works/${project.slug}`}
+                    href={`/works/${project.slug}?from=home`}
                     key={`${project.slug}-${index}`}
                     aria-hidden={index >= lane.length}
                     tabIndex={index >= lane.length ? -1 : undefined}

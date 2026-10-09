@@ -37,13 +37,11 @@ export function WorkCylinder() {
     if (!section || !stageElement) return;
 
     const mask = section.querySelector<SVGSVGElement>('[data-work-mask]');
-    const exitCover = section.querySelector<HTMLElement>('[data-work-exit-cover]');
     const dots = section.querySelector<HTMLElement>('[data-work-dots]');
     const cardsLayer = section.querySelector<HTMLElement>('[data-work-cards]');
-    const cta = section.querySelector<HTMLElement>('[data-work-cta]');
     const cardElements = gsap.utils.toArray<HTMLElement>('[data-work-card]', section);
     const characterElements = gsap.utils.toArray<HTMLElement>('[data-work-character]', section);
-    if (!mask || !exitCover || !dots || !cardsLayer || !cta) return;
+    if (!mask || !dots || !cardsLayer) return;
 
     const characterSetters = characterElements.map((element) => ({
       letter: element.dataset.workLetter as WorkLetter,
@@ -79,7 +77,6 @@ export function WorkCylinder() {
     const render = () => {
       const progress = state.progress;
       const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
       const stageHeight = stageElement.clientHeight;
       const compact = viewportWidth < 720;
       const radius = Math.max(
@@ -92,11 +89,6 @@ export function WorkCylinder() {
       const open = smooth(range(progress, 0.1, 0.26));
       const cardRun = range(progress, CONFIG.cardTravelRange.start, CONFIG.cardTravelRange.end);
       const collapse = smooth(range(progress, 0.74, 0.89));
-      const capsuleExit = smooth(range(
-        progress,
-        CONFIG.capsuleExitRange.start,
-        CONFIG.capsuleExitRange.end,
-      ));
       const letterHeight = progress < 0.74
         ? CONFIG.letterMinHeight + (letterMaxHeight - CONFIG.letterMinHeight) * open
         : letterMaxHeight - (letterMaxHeight - CONFIG.letterMinHeight) * collapse;
@@ -111,7 +103,6 @@ export function WorkCylinder() {
       const capsuleHeight = compact
         ? Math.min(stageHeight * 0.58 + 180, 650)
         : Math.min(stageHeight * 0.64 + 150, 760);
-      const capsuleExitDistance = stageHeight * 0.5 + capsuleHeight * 0.5 + 48;
       const gridTailHeight = 70 * 5;
       const naturalTailHeight = (stageHeight - capsuleHeight) * 0.5;
       const maskTailExtension = Math.max(0, gridTailHeight - naturalTailHeight);
@@ -120,31 +111,9 @@ export function WorkCylinder() {
         `${stageHeight + maskTravel + maskTailExtension}px`,
       );
       stageElement.style.setProperty('--work-mask-center-y', `${stageHeight * 0.5 + maskTravel}px`);
-      // Exit the grid, capsule cutout and capsule outline as one rigid sheet.
-      // Keeping them in the same coordinate space prevents the capsule from
-      // drifting faster than the grid and lets the sheet's bottom edge reveal About.
       const maskY = -enter * maskTravel;
-      const exitY = capsuleExit * capsuleExitDistance;
-      setMaskTransform(`translate3d(0, ${maskY - exitY}px, 0) scale(${maskScale})`);
+      setMaskTransform(`translate3d(0, ${maskY}px, 0) scale(${maskScale})`);
       setMaskOpacity(maskOpacity);
-      const sheetBottom = stageHeight + maskTailExtension - exitY;
-      const exitCoverTop = capsuleExit > 0 ? clamp(sheetBottom, 0, stageHeight) : stageHeight;
-      exitCover.style.transform = `translate3d(0,${exitCoverTop}px,0)`;
-
-      // The directory CTA is rigidly attached to the grid sheet, exactly two
-      // 70px grid rows below the capsule. It enters only because the whole
-      // sheet moves upward; the CTA itself has no reveal or slide animation.
-      const maskCenterY = stageHeight * 0.5 + maskTravel;
-      const maskTranslationY = maskY - exitY;
-      const capsuleOuterHeight = capsuleHeight + 32;
-      const capsuleBottom = maskCenterY
-        + maskTranslationY
-        + capsuleOuterHeight * maskScale * 0.5;
-      const ctaTop = capsuleBottom + 70 * 2;
-      cta.style.transform = `translate3d(-50%,${ctaTop}px,0)`;
-      cta.style.pointerEvents = ctaTop < stageHeight && ctaTop + cta.offsetHeight > 0
-        ? 'auto'
-        : 'none';
 
       const dotTravel = range(progress, 0.1, 0.89) * CONFIG.dotDriftSpeed;
       setDotsTransform(`translate3d(${-dotTravel}px, ${dotTravel * 0.42}px, 0)`);
@@ -281,7 +250,7 @@ export function WorkCylinder() {
         <div className="work-cylinder__cards" data-work-cards>
           {featuredProjects.map((project, index) => (
             <Link
-              href={`/works/${project.slug}`}
+              href={`/works/${project.slug}?from=home`}
               className="work-cylinder__card"
               data-work-card
               key={project.slug}
@@ -305,8 +274,6 @@ export function WorkCylinder() {
           ))}
         </div>
 
-        <div className="work-cylinder__exit-cover" data-work-exit-cover aria-hidden="true" />
-
         <svg className="work-cylinder__mask" data-work-mask aria-hidden="true">
           <defs>
             <pattern id="work-grid-pattern" width="98" height="70" patternUnits="userSpaceOnUse">
@@ -323,7 +290,10 @@ export function WorkCylinder() {
           <rect className="work-cylinder__capsule" data-work-capsule data-work-capsule-part />
         </svg>
 
-        <Link className="work-cylinder__view-all" data-work-cta href="/works" aria-label="View all work">
+      </div>
+
+      <div className="work-cylinder__tail">
+        <Link className="work-cylinder__view-all" href="/works" aria-label="View all work">
           <span className="work-cylinder__view-all-copy">
             <strong>VIEW ALL WORK</strong>
           </span>
@@ -332,12 +302,11 @@ export function WorkCylinder() {
           </span>
         </Link>
       </div>
-
       <div className="work-cylinder__reduced">
         <header><span>SELECTED WORK</span><h2>Work</h2></header>
         <div>
           {featuredProjects.map((project) => (
-            <Link href={`/works/${project.slug}`} key={project.slug}>
+            <Link href={`/works/${project.slug}?from=home`} key={project.slug}>
               <Image src={project.cover} alt={project.title} fill sizes="(max-width: 700px) 100vw, 50vw" />
               <span><b>{project.english}</b><i>{project.category}</i></span>
             </Link>

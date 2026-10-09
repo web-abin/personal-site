@@ -21,9 +21,13 @@ export function ProjectMediaCarousel({
   gallery?: string[];
   compact?: boolean;
 }) {
-  const media = useMemo(() => [...new Set([cover, ...gallery].filter(Boolean))], [cover, gallery]);
+  const media = useMemo(() => {
+    const galleryMedia = [...new Set(gallery.filter(Boolean))];
+    return galleryMedia.length > 0 ? galleryMedia : [cover];
+  }, [cover, gallery]);
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     if (!api) return;
@@ -37,22 +41,40 @@ export function ProjectMediaCarousel({
     };
   }, [api]);
 
+  useEffect(() => {
+    if (!api || media.length < 2 || isPaused) return;
+    const timer = window.setInterval(() => {
+      if (!document.hidden) api.scrollNext();
+    }, 2500);
+    return () => window.clearInterval(timer);
+  }, [api, isPaused, media.length]);
+
   if (media.length === 1) {
     return (
-      <div className={compact ? 'project-dialog-media' : 'detail-full-cover'}>
-        <img className={compact ? 'project-dialog-cover' : undefined} src={media[0]} alt={`${title}封面`} />
+      <div className={`${compact ? 'project-dialog-media' : 'detail-full-cover'} project-media-frame`}>
+        <img className="project-media-backdrop" src={media[0]} alt="" aria-hidden="true" />
+        <img className={`${compact ? 'project-dialog-cover' : ''} project-media-image`} src={media[0]} alt={`${title}作品图片`} />
       </div>
     );
   }
 
   return (
-    <div className={compact ? 'project-dialog-carousel' : 'detail-carousel'}>
+    <div
+      className={compact ? 'project-dialog-carousel' : 'detail-carousel'}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onFocusCapture={() => setIsPaused(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIsPaused(false);
+      }}
+    >
       <Carousel setApi={setApi} opts={{ loop: true }} aria-label={`${title}作品图片`}>
         <CarouselContent>
           {media.map((image, index) => (
             <CarouselItem key={image}>
-              <div className={compact ? 'project-dialog-media' : 'detail-full-cover'}>
-                <img className={compact ? 'project-dialog-cover' : undefined} src={image} alt={`${title}介绍图 ${index + 1}`} />
+              <div className={`${compact ? 'project-dialog-media' : 'detail-full-cover'} project-media-frame`}>
+                <img className="project-media-backdrop" src={image} alt="" aria-hidden="true" />
+                <img className={`${compact ? 'project-dialog-cover' : ''} project-media-image`} src={image} alt={`${title}介绍图 ${index + 1}`} />
               </div>
             </CarouselItem>
           ))}

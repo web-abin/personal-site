@@ -2817,7 +2817,44 @@ button.wall-image-link { padding:0; appearance:none; color:inherit; }
 .home-view-all svg { width:20px; transition:transform .3s; }
 .home-view-all:hover svg { transform:translate(5px,-5px); }
 
-.home-simple-about { position:relative; z-index:5; padding:clamp(55px,7vw,105px) 0 clamp(110px,14vw,210px); background:transparent; }
+.home-simple-about { position:relative; z-index:5; padding:calc(clamp(55px,7vw,105px) + 280px) 0 clamp(110px,14vw,210px); background:transparent; }
+.home-about-contact-stage {
+  position:relative;
+  z-index:5;
+  isolation:isolate;
+  overflow:hidden;
+  background:#070807;
+}
+.home-about-contact-stage::after {
+  content:'';
+  position:absolute;
+  z-index:0;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(7,8,7,.08),rgba(7,8,7,.04) 18%,rgba(7,8,7,.18) 80%,rgba(7,8,7,.54));
+}
+.home-about-contact-fluid {
+  position:absolute;
+  z-index:0;
+  inset:0;
+  overflow:hidden;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 18% 0,rgba(143,197,82,.3),transparent 34rem),
+    radial-gradient(circle at 82% 12%,rgba(88,126,50,.2),transparent 38rem),
+    #070807;
+}
+.home-about-contact-fluid__canvas {
+  position:sticky;
+  top:0;
+  width:100%;
+  height:100svh;
+  min-height:620px;
+  filter:saturate(1.05) contrast(1.08);
+  transform:scale(1.04);
+}
+.home-about-contact-stage>.home-simple-about,
+.home-about-contact-stage>.home-simple-contact { position:relative; z-index:1; }
 .home-simple-about__grid { display:grid; grid-template-columns:1fr 1fr; gap:8vw; }
 .home-simple-about h2 { margin-top:20px; color:#ededE8; font-size:clamp(50px,6.4vw,100px); font-weight:540; line-height:.98; letter-spacing:-.07em; }
 .home-simple-about__copy { padding-top:52px; }
@@ -3045,7 +3082,7 @@ button.wall-image-link { padding:0; appearance:none; color:inherit; }
 .home-simple-contact {
   padding:clamp(95px,11vw,150px) 0 30px;
   color:#efefea;
-  background:#080808;
+  background:transparent;
 }
 .home-simple-contact h2 {
   margin:0 0 clamp(24px,3vw,38px);
@@ -3311,11 +3348,6 @@ html[data-work-scene-active=true] .home-redesign .header.header--anchor {
   background:var(--work-accent);
 }
 .home-work-influence-stage { overflow:visible; }
-@media(prefers-reduced-motion:no-preference) {
-  /* The Work sheet leaves 302px of grid at rest. Overlap half of the
-     remaining black stage so the grid-to-About pause is half as long. */
-  .work-cylinder + .home-simple-about { margin-top:calc((302px - 100svh) / 2); }
-}
 .work-cylinder__stage {
   --work-capsule-w:clamp(172px,15vw,238px);
   --work-capsule-h:min(calc(64svh + 150px),760px);
@@ -3444,15 +3476,6 @@ html[data-work-scene-active=true] .home-redesign .header.header--anchor {
   .work-cylinder__card:hover img { transform:scale(1.045); filter:brightness(1.08); }
   .work-cylinder__card:hover .work-cylinder__card-image::after { background:transparent; }
 }
-.work-cylinder__exit-cover {
-  position:absolute;
-  z-index:19;
-  inset:0;
-  background:#070707;
-  pointer-events:none;
-  transform:translate3d(0,100%,0);
-  will-change:transform;
-}
 .work-cylinder__mask {
   position:absolute;
   z-index:20;
@@ -3506,10 +3529,8 @@ html[data-work-scene-active=true] .home-redesign .header.header--anchor {
   vector-effect:non-scaling-stroke;
 }
 .work-cylinder__view-all {
-  position:absolute;
+  position:relative;
   z-index:21;
-  left:50%;
-  top:0;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -3521,11 +3542,20 @@ html[data-work-scene-active=true] .home-redesign .header.header--anchor {
   color:var(--work-accent);
   background:#050505;
   box-shadow:0 9px 0 color-mix(in srgb,#050505 28%,transparent);
-  opacity:1;
-  pointer-events:none;
-  transform:translate3d(-50%,0,0);
-  will-change:transform;
   transition:box-shadow .3s cubic-bezier(.22,1,.36,1);
+}
+.work-cylinder__tail {
+  position:relative;
+  z-index:2;
+  display:grid;
+  place-items:center;
+  min-height:280px;
+  padding:70px 24px;
+  background-color:var(--work-accent);
+  background-image:
+    linear-gradient(90deg,#050505 2px,transparent 2px),
+    linear-gradient(#050505 2px,transparent 2px);
+  background-size:98px 70px;
 }
 .work-cylinder__view-all-copy { display:flex; align-items:center; }
 .work-cylinder__view-all-copy strong {
@@ -3554,6 +3584,7 @@ html[data-work-scene-active=true] .home-redesign .header.header--anchor {
 
 .work-cylinder[data-reduced-motion=true] { height:auto; min-height:0; padding:110px 0; background:#050505; color:#efefea; }
 .work-cylinder[data-reduced-motion=true] .work-cylinder__stage { display:none; }
+.work-cylinder[data-reduced-motion=true] .work-cylinder__tail { display:none; }
 .work-cylinder[data-reduced-motion=true] .work-cylinder__reduced { display:block; width:min(1280px,calc(100% - 48px)); margin:auto; }
 .work-cylinder__reduced header { display:flex; align-items:end; justify-content:space-between; padding-bottom:22px; border-bottom:1px solid #ffffff22; }
 .work-cylinder__reduced header h2 { margin:0; font-size:clamp(46px,7vw,92px); }

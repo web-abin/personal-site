@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { InteractiveWordmark } from '@/components/interactive-wordmark';
 import { RipplePortrait } from '@/components/ripple-portrait';
 import { WorkCylinder } from '@/components/work-cylinder';
+import { Ferrofluid } from '@/components/ferrofluid';
 
 const skills = [
   { name: 'Vue', level: 5 },
@@ -185,9 +186,27 @@ export function HomeStory() {
     <Skills />
     <div className="home-work-influence-stage">
       <WorkCylinder />
-      <About />
+      <div className="home-about-contact-stage">
+        <div className="home-about-contact-fluid" aria-hidden="true">
+          <Ferrofluid
+            className="home-about-contact-fluid__canvas"
+            colors={['#11160d', '#354c22', '#8fc552', '#caff58']}
+            speed={0.28}
+            scale={1.18}
+            turbulence={1.5}
+            fluidity={0.16}
+            rimWidth={0.25}
+            sharpness={2.7}
+            shimmer={1.3}
+            glow={1.8}
+            opacity={0.58}
+            mouseInteraction={false}
+          />
+        </div>
+        <About />
+        <Contact />
+      </div>
     </div>
-    <Contact />
     <InteractiveWordmark />
   </div>;
 }

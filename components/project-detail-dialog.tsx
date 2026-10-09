@@ -5,6 +5,8 @@ import { useGSAP } from '@gsap/react';
 import { ArrowUpRight, X } from 'lucide-react';
 import type { Project } from '@/lib/portfolio';
 import { ProjectMediaCarousel } from '@/components/project-media-carousel';
+import { ProjectMarkdown } from '@/components/project-markdown';
+import { ProjectMetrics } from '@/components/project-metrics';
 
 if (typeof window !== 'undefined') gsap.registerPlugin(useGSAP);
 export type ProjectOrigin = { x: number; y: number; width: number; height: number };
@@ -72,18 +74,14 @@ export function ProjectDetailDialog({ project, origin, onClose }: {
         <div className="project-dialog-content">
           <h2 id={titleId}>{project.title}</h2>
           <p className="project-dialog-intro" id={descriptionId}>{project.description}</p>
+          <ProjectMetrics metrics={project.metrics} />
           <div className="project-dialog-body">
             <aside><h3>技术栈</h3>
               {project.techStack?.length ? <ul className="project-tech">{project.techStack.map(tech => <li key={tech}>{tech}</li>)}</ul> : <p className="project-detail-muted">待补充</p>}
               {project.role && <><h3>我的角色</h3><p>{project.role}</p></>}
             </aside>
             <div className="project-story">
-              {(project.sections ?? [{ title: '作品介绍', text: project.approach }]).map((section, index) => <section key={index}>
-                {section.title && <h3>{section.title}</h3>}
-                {section.text && <p>{section.text}</p>}
-                {section.items?.length && <ul>{section.items.map(item => <li key={item}>{item}</li>)}</ul>}
-                {section.image && <img src={section.image} alt={section.alt ?? section.title ?? '作品介绍图片'} loading="lazy" />}
-              </section>)}
+              <ProjectMarkdown content={project.content} />
             </div>
           </div>
           {(experienceUrl || project.articleUrl) && <footer className="project-dialog-action">

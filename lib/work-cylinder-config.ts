@@ -56,12 +56,6 @@ export const WORK_CYLINDER_CONFIG = {
     end: 0.7,
   },
 
-  /** 作品播放完成并恢复胶囊后，胶囊向上退场的滚动区间。 */
-  capsuleExitRange: {
-    start: 0.89,
-    end: 1,
-  },
-
   /** 点阵在一次作品墙滚动区间内的漂移距离（px）。 */
   dotDriftSpeed: 42,
 

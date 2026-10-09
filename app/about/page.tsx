@@ -21,10 +21,10 @@ const timeline: TimelineItem[] = [
 ];
 
 const products = [
-  { title: 'ClipZap', meta: '多模态内容工作流', image: '/images/gallery/clipzap.png', href: '/works/clipzap' },
-  { title: 'TiKie', meta: 'AI 角色互动平台', image: '/images/gallery/tikie-gallery.png', href: '/works/tikie' },
-  { title: '开心点连连看', meta: '独立微信小游戏', image: '/images/kaixin-lianliankan.jpg', href: '/works/kaixin-lianliankan' },
-  { title: 'RAGLab', meta: '知识检索与评测', image: '/images/gallery/raglab.png', href: '/works/raglab' },
+  { title: 'ClipZap', meta: '多模态内容工作流', image: '/images/gallery/clipzap.png', href: '/works/clipzap?from=about' },
+  { title: 'TiKie', meta: 'AI 角色互动平台', image: '/images/gallery/tikie-gallery.png', href: '/works/tikie?from=about' },
+  { title: '开心点连连看', meta: '独立微信小游戏', image: '/images/kaixin-lianliankan.jpg', href: '/works/kaixin-lianliankan?from=about' },
+  { title: 'RAGLab', meta: '知识检索与评测', image: '/images/gallery/raglab.png', href: '/works/raglab?from=about' },
 ];
 
 function BrandLogo({ brand }: { brand: 'mail' | 'github' | 'juejin' | 'csdn' }) {

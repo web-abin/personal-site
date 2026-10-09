@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { projects } from '@/lib/portfolio';
-import { Header, Footer, Label } from '@/components/site-shell';
+import { ProjectMarkdown } from '@/components/project-markdown';
 import { ProjectMediaCarousel } from '@/components/project-media-carousel';
+import { ProjectMetrics } from '@/components/project-metrics';
+import { ProjectBackButton, ProjectPager } from '@/components/project-detail-navigation';
 import './detail.css';
 type Props = { params: Promise<{ slug: string }> };
 
@@ -33,90 +33,24 @@ export default async function ProjectPage({ params }: Props) {
   const { slug } = await params;
   const p = projects.find((p) => p.slug === slug);
   if (!p) notFound();
-  const next = projects[(projects.indexOf(p) + 1) % projects.length];
+  const projectIndex = projects.indexOf(p);
+  const previous = projects[(projectIndex - 1 + projects.length) % projects.length];
+  const next = projects[(projectIndex + 1) % projects.length];
+  const introContent = `# ${p.title}\n\n> ${p.description}`;
+
   return (
-    <>
-      <Header minimal />
-      <main id="main" className="wrap detail-page">
-        <Link className="text-link back-link" href="/works">
-          <ArrowLeft size={16} /> 返回作品集
-        </Link>
-        <div className="detail-heading">
-          <Label>{['作品 ' + p.number, p.category, p.year].filter(Boolean).join(' / ')}</Label>
-          <h1>
-            {p.title}
-            <span className="serif">.</span>
-          </h1>
-          <p>{p.description}</p>
-          <div className="tags">
-            {[...new Set([...p.tags, ...p.techStack])].map((t) => (
-              <span key={t}>{t}</span>
-            ))}
-            <span>{p.status}</span>
-          </div>
-          {(p.experienceUrl || p.articleUrl) && <div className="detail-actions detail-actions--top">
-            {p.experienceUrl && <a className="detail-experience-link" href={p.experienceUrl} target="_blank" rel="noopener noreferrer">体验作品 <ArrowUpRight size={20} /></a>}
-            {p.articleUrl && <a className="detail-article-link" href={p.articleUrl} target="_blank" rel="noopener noreferrer">阅读介绍文章 <ArrowUpRight size={18} /></a>}
-          </div>}
+    <main id="main" className="detail-page">
+      <ProjectBackButton />
+      <div className="md-content-shell">
+        <ProjectMarkdown content={introContent} />
+        <div className="tag-group" aria-label="作品标签">
+          {[...new Set([...p.tags, ...p.techStack, p.status])].map((tag) => <span className="tag" key={tag}>{tag}</span>)}
         </div>
         <ProjectMediaCarousel title={p.title} cover={p.cover} gallery={p.gallery} />
-        {p.sample && (
-          <p className="sample-notice">
-            此项目为布局示例，尚未替换为你的真实作品；以下内容不代表个人经历。
-          </p>
-        )}
-        {p.metrics.length > 0 && <div className="detail-metrics">
-          {p.metrics.map((m) => (
-            <div key={m.label}>
-              <strong>{m.value}</strong>
-              <span>{m.label}</span>
-            </div>
-          ))}
-        </div>}
-        {p.sections?.map((section, index) => <section className="detail-content-section" key={index}>
-          {section.title && <h2>{section.title}</h2>}
-          {section.text && <p>{section.text}</p>}
-          {section.items?.length && <ul>{section.items.map((item) => <li key={item}>{item}</li>)}</ul>}
-          {section.image && <img src={section.image} alt={section.alt || section.title || ''} />}
-        </section>)}
-        {(p.challenge || p.approach || p.result) && <section className="case-body">
-          <aside>
-            <Label>作品背后的故事</Label>
-            <h2>
-              不只是结果，
-              <br />
-              还有过程。
-            </h2>
-            <div className="case-role">
-              <span>我的角色</span>
-              <p>{p.role}</p>
-            </div>
-          </aside>
-          <div className="case-sections">
-            {[
-              ['01', '背景与挑战', p.challenge],
-              ['02', '思路与实现', p.approach],
-              ['03', '成果与复盘', p.result],
-            ].map(([n, title, desc]) => (
-              <section key={n}>
-                <Label>
-                  {n} / {title}
-                </Label>
-                <h3>{title}</h3>
-                <p>{desc}</p>
-              </section>
-            ))}
-          </div>
-        </section>}
-        <Link className="next-project" href={`/works/${next.slug}`}>
-          <div>
-            <Label>下一个作品</Label>
-            <h2>{next.title}</h2>
-          </div>
-          <ArrowUpRight size={42} />
-        </Link>
-      </main>
-      <Footer hideCallout />
-    </>
+        <ProjectMetrics metrics={p.metrics} />
+        <ProjectMarkdown content={p.content} />
+      </div>
+      <ProjectPager previous={previous} next={next} />
+    </main>
   );
 }
