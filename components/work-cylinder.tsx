@@ -52,10 +52,12 @@ export function WorkCylinder() {
 
     const mask = section.querySelector<SVGSVGElement>('[data-work-mask]');
     const dots = section.querySelector<HTMLElement>('[data-work-dots]');
+    const lettersLayer = section.querySelector<HTMLElement>('.work-cylinder__letters');
     const cardsLayer = section.querySelector<HTMLElement>('[data-work-cards]');
+    const tail = section.querySelector<HTMLElement>('.work-cylinder__tail');
     const cardElements = gsap.utils.toArray<HTMLElement>('[data-work-card]', section);
     const characterElements = gsap.utils.toArray<HTMLElement>('[data-work-character]', section);
-    if (!mask || !dots || !cardsLayer) return;
+    if (!mask || !dots || !lettersLayer || !cardsLayer || !tail) return;
 
     const characterSetters = characterElements.map((element) => ({
       letter: element.dataset.workLetter as WorkLetter,
@@ -74,6 +76,16 @@ export function WorkCylinder() {
     const state = { progress: 0 };
     stageElement.style.setProperty('--work-row-gap', `${CONFIG.rowGap}px`);
 
+    // WORK belongs visually to the viewport, not to the section's document
+    // position. Keeping it inside the world still lets the surrounding page,
+    // grid and capsule clip/cover it, while this compensation prevents the
+    // entering section from dragging the lockup vertically.
+    const syncLettersToViewport = () => {
+      const stageTop = stageElement.getBoundingClientRect().top;
+      lettersLayer.style.top = `${window.innerHeight * 0.5 - stageTop}px`;
+    };
+    syncLettersToViewport();
+
     const getCardMetrics = () => {
       const viewportWidth = window.innerWidth;
       const compact = viewportWidth < 720;
@@ -90,10 +102,7 @@ export function WorkCylinder() {
       // the final card equally far beyond the left edge.
       const start = viewportWidth * 0.5 + cardWidth * 0.5 + offscreenPadding;
       const totalTravel = viewportWidth + cardWidth + offscreenPadding * 2 + spacing * (cardElements.length - 1);
-      const centers = cardElements.map((_, index) => (
-        0.26 + clamp((start + index * spacing) / totalTravel) * (0.72 - 0.26)
-      ));
-      return { cardWidth, spacing, start, totalTravel, centers };
+      return { cardWidth, spacing, start, totalTravel };
     };
 
     const render = () => {
@@ -107,6 +116,8 @@ export function WorkCylinder() {
       );
       const letterMaxHeight = CONFIG.letterMaxHeight;
       stageElement.style.setProperty('--work-letter-max-height', `${letterMaxHeight}px`);
+      // Preserve the original, reversible 3D entrance exactly: the capsule
+      // arrives at centre at 10%, and the wall begins expanding immediately.
       const enter = smooth(range(progress, 0, 0.1));
       const open = smooth(range(progress, 0.1, 0.26));
       const cardRun = range(progress, CONFIG.cardTravelRange.start, CONFIG.cardTravelRange.end);
@@ -125,17 +136,29 @@ export function WorkCylinder() {
       const capsuleHeight = compact
         ? Math.min(stageHeight * 0.58 + 180, 650)
         : Math.min(stageHeight * 0.64 + 150, 760);
-      const gridTailHeight = 70 * 5;
-      const naturalTailHeight = (stageHeight - capsuleHeight) * 0.5;
-      const maskTailExtension = Math.max(0, gridTailHeight - naturalTailHeight);
+      const letterBlockHeight = (CONFIG.letterMinHeight + CONFIG.rowGap) * letters.length;
+      const capsuleClearDistance = capsuleHeight * 0.5 + letterBlockHeight * 0.5 + 24;
+      // Only add the exact off-screen SVG buffer needed for the final grid to
+      // cover the fixed WORK lockup. The About section takes over immediately
+      // after the pinned scene, so this never creates a long visible grid wall.
+      const maskTailExtension = Math.max(
+        0,
+        capsuleClearDistance - stageHeight * 0.5 + letterBlockHeight * 0.5 + 20,
+      );
+      const leave = smooth(range(progress, 0.89, 0.98));
+      const maskY = -enter * maskTravel - leave * capsuleClearDistance;
       stageElement.style.setProperty(
         '--work-mask-height',
         `${stageHeight + maskTravel + maskTailExtension}px`,
       );
+      stageElement.style.setProperty('--work-mask-top', '0px');
       stageElement.style.setProperty('--work-mask-center-y', `${stageHeight * 0.5 + maskTravel}px`);
-      const maskY = -enter * maskTravel;
       setMaskTransform(`translate3d(0, ${maskY}px, 0) scale(${maskScale})`);
       setMaskOpacity(maskOpacity);
+      // The CTA is part of the grid composition, not a viewport overlay. It
+      // shares the capsule's vertical travel and simply enters through the
+      // stage crop with no opacity animation.
+      tail.style.transform = `translate3d(0, ${maskY}px, 0)`;
 
       const dotTravel = range(progress, 0.1, 0.89) * CONFIG.dotDriftSpeed;
       setDotsTransform(`translate3d(${-dotTravel}px, ${dotTravel * 0.42}px, 0)`);
@@ -262,7 +285,15 @@ export function WorkCylinder() {
           window.dispatchEvent(new Event('workscenechange'));
         },
         onUpdate: (self) => {
-          progressTween.resetTo('progress', self.progress);
+          if (self.progress < 0.89) {
+            progressTween.resetTo('progress', self.progress);
+            return;
+          }
+          // The original scene keeps its inertia. Only the final cover follows
+          // scroll exactly so it is complete before the pin is released.
+          progressTween.pause();
+          state.progress = self.progress;
+          render();
         },
         onRefresh: (self) => {
           progressTween.pause();
@@ -274,9 +305,21 @@ export function WorkCylinder() {
       document.documentElement.dataset.workSceneActive = String(workTrigger.isActive);
       window.dispatchEvent(new Event('workscenechange'));
       render();
+      const viewportLettersTrigger = ScrollTrigger.create({
+        id: 'home-work-viewport-letters',
+        trigger: section,
+        start: 'top bottom',
+        end: 'bottom top',
+        invalidateOnRefresh: true,
+        onToggle: syncLettersToViewport,
+        onUpdate: syncLettersToViewport,
+        onRefresh: syncLettersToViewport,
+      });
       return () => {
+        viewportLettersTrigger.kill();
         progressTween.kill();
         workTrigger.kill();
+        lettersLayer.style.removeProperty('top');
         delete document.documentElement.dataset.workSceneActive;
         window.dispatchEvent(new Event('workscenechange'));
       };
@@ -360,18 +403,9 @@ export function WorkCylinder() {
           <rect className="work-cylinder__capsule" data-work-capsule data-work-capsule-part />
         </svg>
 
+        <WorkCylinderTail />
       </div>
 
-      <div className="work-cylinder__tail">
-        <Link className="work-cylinder__view-all" href="/works" aria-label="View all work">
-          <span className="work-cylinder__view-all-copy">
-            <strong>VIEW ALL WORK</strong>
-          </span>
-          <span className="work-cylinder__view-all-icon" aria-hidden="true">
-            <ArrowUpRight />
-          </span>
-        </Link>
-      </div>
       <div className="work-cylinder__reduced">
         <header><span>SELECTED WORK</span><h2>Work</h2></header>
         <div>
@@ -385,5 +419,20 @@ export function WorkCylinder() {
         <Link href="/works">VIEW ALL WORK <ArrowUpRight aria-hidden="true" /></Link>
       </div>
     </section>
+  );
+}
+
+function WorkCylinderTail() {
+  return (
+    <div className="work-cylinder__tail">
+      <Link className="work-cylinder__view-all" href="/works" aria-label="View all work">
+        <span className="work-cylinder__view-all-copy">
+          <strong>VIEW ALL WORK</strong>
+        </span>
+        <span className="work-cylinder__view-all-icon" aria-hidden="true">
+          <ArrowUpRight />
+        </span>
+      </Link>
+    </div>
   );
 }
