@@ -2515,8 +2515,10 @@ button.wall-image-link { padding:0; appearance:none; color:inherit; }
   object-fit:cover;
   filter:grayscale(1) contrast(1.08) brightness(.88);
   transform:scale(1.015);
-  transition:filter .45s ease,transform .65s cubic-bezier(.22,1,.36,1);
+  transition:opacity .42s ease,filter .45s ease,transform .65s cubic-bezier(.22,1,.36,1);
 }
+.portfolio-flow-card__loader { width:100%; height:100%; background:transparent; animation:none; }
+.portfolio-flow-card__loader>img { transition:filter .45s ease,transform .65s cubic-bezier(.22,1,.36,1); }
 .portfolio-flow-card__meta {
   position:absolute;
   left:12px;
@@ -3225,6 +3227,7 @@ button.wall-image-link { padding:0; appearance:none; color:inherit; }
   height:100%;
 }
 .ripple-portrait img { object-fit:cover; filter:grayscale(1) contrast(1.04); }
+.ripple-portrait__loader { position:absolute; inset:0; width:100%; height:100%; }
 .ripple-portrait canvas { z-index:1; opacity:0; transition:opacity .35s ease; }
 .ripple-portrait[data-ready=true] canvas { opacity:1; }
 .ripple-portrait figcaption {
@@ -3476,8 +3479,9 @@ html[data-work-scene-active=true] .home-redesign .header.header--anchor {
   height:auto;
   max-width:calc(var(--work-card-w) - 8px);
   max-height:400px;
-  transition:filter .35s ease;
+  transition:opacity .42s ease,filter .35s ease;
 }
+.work-cylinder__image-loader { display:flex; align-items:center; justify-content:center; width:max-content; max-width:calc(var(--work-card-w) - 8px); max-height:400px; }
 .work-cylinder__card-copy {
   display:flex;
   flex:0 0 32px;
@@ -3609,6 +3613,7 @@ html[data-work-scene-active=true] .home-redesign .header.header--anchor {
 .work-cylinder__reduced>div { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; margin-top:55px; }
 .work-cylinder__reduced>div>a { position:relative; overflow:hidden; aspect-ratio:1.5; }
 .work-cylinder__reduced img { display:block; width:100%; height:100%; object-fit:contain; object-position:center; background:#111; }
+.work-cylinder__reduced-loader { position:absolute; inset:0; width:100%; height:100%; }
 .work-cylinder__reduced>div span { position:absolute; left:0; right:0; bottom:0; display:flex; justify-content:space-between; padding:18px; color:#fff; background:#000b; }
 .work-cylinder__reduced i { font-style:normal; }
 .work-cylinder__reduced>a { display:flex; justify-content:space-between; width:min(390px,100%); margin:70px auto 0; padding:18px 0; border-block:1px solid #ffffff55; }

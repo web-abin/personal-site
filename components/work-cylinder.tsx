@@ -3,7 +3,6 @@
 /* oxlint-disable next/no-img-element */
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { ArrowUpRight } from 'lucide-react';
 import { useRef } from 'react';
 import { gsap } from 'gsap';
@@ -11,6 +10,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 import { projects } from '@/lib/portfolio';
 import { WORK_CYLINDER_CONFIG as CONFIG } from '@/lib/work-cylinder-config';
+import { LoadingImage } from '@/components/loading-image';
 
 if (typeof window !== 'undefined') gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -369,9 +369,10 @@ export function WorkCylinder() {
                 aria-label={`View ${project.english}`}
               >
                 <span className="work-cylinder__card-image">
-                  <img
+                  <LoadingImage
                     src={project.cover}
                     alt={project.title}
+                    frameClassName="work-cylinder__image-loader"
                     loading={index < 2 ? 'eager' : 'lazy'}
                     fetchPriority={index < 2 ? 'high' : 'auto'}
                     decoding="async"
@@ -411,7 +412,11 @@ export function WorkCylinder() {
         <div>
           {featuredProjects.map((project) => (
             <Link href={`/works/${project.slug}?from=home`} key={project.slug}>
-              <Image src={project.cover} alt={project.title} fill sizes="(max-width: 700px) 100vw, 50vw" />
+              <LoadingImage
+                src={project.cover}
+                alt={project.title}
+                frameClassName="work-cylinder__reduced-loader"
+              />
               <span><b>{project.english}</b><i>{project.category}</i></span>
             </Link>
           ))}

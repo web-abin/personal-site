@@ -1,5 +1,7 @@
 'use client';
 
+/* oxlint-disable next/no-img-element */
+
 import { useEffect, useMemo, useState } from 'react';
 import {
   type CarouselApi,
@@ -9,6 +11,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
+import { LoadingImage } from '@/components/loading-image';
 
 export function ProjectMediaCarousel({
   title,
@@ -52,8 +55,13 @@ export function ProjectMediaCarousel({
   if (media.length === 1) {
     return (
       <div className={`${compact ? 'project-dialog-media' : 'detail-full-cover'} project-media-frame`}>
-        <img className="project-media-backdrop" src={media[0]} alt="" aria-hidden="true" />
-        <img className={`${compact ? 'project-dialog-cover' : ''} project-media-image`} src={media[0]} alt={`${title}作品图片`} />
+        <img className="project-media-backdrop" src={media[0]} alt="" aria-hidden="true" loading="lazy" decoding="async" />
+        <LoadingImage
+          className={`${compact ? 'project-dialog-cover' : ''} project-media-image`}
+          frameClassName="project-media-loader"
+          src={media[0]}
+          alt={`${title}作品图片`}
+        />
       </div>
     );
   }
@@ -73,8 +81,13 @@ export function ProjectMediaCarousel({
           {media.map((image, index) => (
             <CarouselItem key={image}>
               <div className={`${compact ? 'project-dialog-media' : 'detail-full-cover'} project-media-frame`}>
-                <img className="project-media-backdrop" src={image} alt="" aria-hidden="true" />
-                <img className={`${compact ? 'project-dialog-cover' : ''} project-media-image`} src={image} alt={`${title}介绍图 ${index + 1}`} />
+                <img className="project-media-backdrop" src={image} alt="" aria-hidden="true" loading="lazy" decoding="async" />
+                <LoadingImage
+                  className={`${compact ? 'project-dialog-cover' : ''} project-media-image`}
+                  frameClassName="project-media-loader"
+                  src={image}
+                  alt={`${title}介绍图 ${index + 1}`}
+                />
               </div>
             </CarouselItem>
           ))}

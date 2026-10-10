@@ -3,6 +3,7 @@
 import { isValidElement, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { LoadingImage } from '@/components/loading-image';
 
 type MermaidProps = {
   chart: string;
@@ -100,6 +101,9 @@ export function ProjectMarkdown({ content }: { content: string }) {
             <a {...props} target="_blank" rel="noopener noreferrer">
               {children}
             </a>
+          ),
+          img: ({ node: _node, ...props }) => (
+            <LoadingImage {...props} frameClassName="markdown-image-loader" />
           ),
         }}
       >

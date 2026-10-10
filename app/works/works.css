@@ -38,7 +38,9 @@
 .works-masonry-image { position:relative; overflow:hidden; width:100%; background:#141414; border:1px solid #282828; border-radius:8px; box-shadow:0 24px 70px rgba(0,0,0,.22); }
 .works-masonry-image::before { content:''; position:absolute; z-index:1; inset:0; border-radius:inherit; box-shadow:inset 0 0 0 1px rgba(255,255,255,.04); pointer-events:none; }
 .works-masonry-image::after { content:''; position:absolute; inset:0; background:linear-gradient(140deg,rgba(255,255,255,.04),transparent 38%,rgba(0,0,0,.08)); pointer-events:none; transition:opacity .45s; }
-.works-masonry-image img { display:block; width:100%; height:auto; transition:transform .75s cubic-bezier(.22,1,.36,1),filter .45s; }
+.works-masonry-image img { display:block; width:100%; height:auto; transition:opacity .42s ease,transform .75s cubic-bezier(.22,1,.36,1),filter .45s; }
+.works-masonry-image .image-loader { width:100%; min-height:clamp(180px,26vw,280px); }
+.works-masonry-image .image-loader--loaded { min-height:0; }
 .works-masonry-copy { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:0 24px; padding:23px 3px 0; }
 .works-masonry-meta { grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; color:#797b75; font:10px/1.5 "SFMono-Regular",Consolas,monospace; letter-spacing:.08em; }
 .works-masonry-copy h2 { font-size:clamp(24px,2.1vw,34px); line-height:1.3; font-weight:480; letter-spacing:-.04em; margin:17px 0 10px; }

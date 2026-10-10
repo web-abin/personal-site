@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import { gsap } from 'gsap';
+import { LoadingImage } from '@/components/loading-image';
 import { useGSAP } from '@gsap/react';
 
 if (typeof window !== 'undefined') gsap.registerPlugin(useGSAP);
@@ -154,7 +155,12 @@ export function RipplePortrait() {
 
   return (
     <figure ref={root} className="ripple-portrait">
-      <img src="/images/wang-junbin-seaside.jpg" alt="王俊彬在海边夕阳下的剪影" draggable={false} />
+      <LoadingImage
+        src="/images/wang-junbin-seaside.jpg"
+        alt="王俊彬在海边夕阳下的剪影"
+        frameClassName="ripple-portrait__loader"
+        draggable={false}
+      />
       <canvas ref={canvas} aria-hidden="true" />
       <figcaption>MOVE ACROSS THE PORTRAIT</figcaption>
     </figure>
